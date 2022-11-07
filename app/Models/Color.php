@@ -21,4 +21,8 @@ class Color extends Model
     {
         return $this->belongsToMany(Palette::class);
     }
+    public function dates()
+    {
+        return $this->hasMany(Date::class);
+    }
 }

@@ -22,8 +22,8 @@ class ColorsResource extends JsonResource
                 'updated_at' => $this->updated_at,
             ],
             'relationsips' => [
-                'calendars' => CalendarsResource::collection($this->calendars),
-                'palettes' => PalettesResource::collection($this->palettes),
+                'calendars' => CalendarResource::collection($this->calendars),
+                'palettes' => PaletteResource::collection($this->palettes),
                 'dates' => DatesResource::collection($this->dates),
 
             ]

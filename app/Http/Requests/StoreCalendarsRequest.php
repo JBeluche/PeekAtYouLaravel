@@ -24,8 +24,9 @@ class StoreCalendarsRequest extends FormRequest
     public function rules()
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
-            'colors' => ['array']
+            'name' => ['required', 'string', 'max:75'],
+            'colors' => ['array'],
+            'colors.*.hex_value' =>  ['required', 'string', 'max:10'],
         ];
     }
 }

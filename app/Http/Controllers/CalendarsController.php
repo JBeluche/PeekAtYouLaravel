@@ -6,9 +6,12 @@ use App\Http\Requests\StoreCalendarsRequest;
 use App\Http\Requests\StoreColorsRequest;
 use App\Http\Resources\CalendarsResource;
 use App\Models\Calendar;
+use App\Models\Color;
 use App\Traits\HttpResponses;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 
 class CalendarsController extends Controller
 {
@@ -24,27 +27,25 @@ class CalendarsController extends Controller
     public function store(StoreCalendarsRequest $request)
     {
 
-
-        //Validate the colors
-       /* foreach($request->colors as $color_request)
-        {
-            $color_request = new StoreColorsRequest;
-            var_dump($color_request);
-        }
-*/
-
-        //Check if they exixt in color table
-            //Create them if they don't
-        //Add the colors to the calendar via pivot table (calendar_color)
-
         $request->validated($request->all());
-        
+
+        //Create new calendar
         $calendar = Calendar::create([
             'user_id' => Auth::user()->id,
             'name' => $request->name,
         ]);
 
-        return new CalendarsResource($calendar);
+        //Create all the colors and relations
+        foreach($request->colors as $hex_value)
+        {
+            //Check if color exist, otherwise create it.
+            $color = Color::firstOrCreate(['hex_value' => $hex_value['hex_value']]);
+            
+            //Then just add the relationship.
+            $calendar->colors()->attach($color);
+        }
+        
+      return new CalendarsResource($calendar);
     }
 
     public function show(Calendar $calendar)

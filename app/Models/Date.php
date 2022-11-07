@@ -15,12 +15,17 @@ class Date extends Model
 
     public function color()
     {
-        return $this->hasOne(Color::class);
+        return $this->belongsTo(Color::class);
     }
 
     public function calendar()
     {
         return $this->belongsTo(Calendar::class);
+    }
+
+    public function dates()
+    {
+        return $this->hasMany(Date::class);
     }
 
 }
