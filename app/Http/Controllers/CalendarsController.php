@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreCalendarsRequest;
 use App\Http\Requests\StoreColorsRequest;
+use App\Http\Requests\UpdateCalendarRequest;
 use App\Http\Resources\CalendarsResource;
 use App\Models\Calendar;
 use App\Models\Color;
 use App\Traits\HttpResponses;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -36,10 +38,10 @@ class CalendarsController extends Controller
         ]);
 
         //Create all the colors and relations
-        foreach($request->colors as $hex_value)
+        foreach($request->colors as $color)
         {
             //Check if color exist, otherwise create it.
-            $color = Color::firstOrCreate(['hex_value' => $hex_value['hex_value']]);
+            $color = Color::firstOrCreate(['hex_value' => $color['hex_value']]);
             
             //Then just add the relationship.
             $calendar->colors()->attach($color);
@@ -53,12 +55,33 @@ class CalendarsController extends Controller
         return $this->isNotAuthorized($calendar) ? $this->isNotAuthorized($calendar) : new CalendarsResource($calendar);
     }
 
-    public function update(Request $request, Calendar $calendar )
+    public function update(UpdateCalendarRequest $request, Calendar $calendar )
     {
         if(Auth::user()->id !== $calendar->user_id){
             return $this->error('', 'You are not authorized', 403);
         }
-        $calendar->update($request->all());
+       
+        //Handle validation?
+        $request->validated($request->all());
+        
+        $calendarColors = [];
+
+        foreach($request->colors as $color)
+        {
+            //Sync the relationships
+            $colorObj = Color::firstOrCreate(['hex_value' => $color['hex_value']]);
+            
+            //Then just add the relationship.
+            array_push($calendarColors, $colorObj['id']);
+        }
+
+        //var_dump($calendarColors);
+        $calendar->colors()->sync($calendarColors, true);
+
+
+        $calendar->update([
+            'name' => $request->name,
+        ]);
 
         return new CalendarsResource($calendar);
     }
