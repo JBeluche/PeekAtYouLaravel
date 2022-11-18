@@ -22,4 +22,12 @@ class Palette extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    
+    public function hasColor($color)
+    {
+        return $this->colors()
+            ->where('color_id', $color->getKey())
+            ->exists();
+    }
 }

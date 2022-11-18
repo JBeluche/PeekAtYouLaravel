@@ -2,83 +2,112 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreDatesRequest;
+use App\Http\Requests\UpdateDatesRequest;
+use App\Http\Resources\DatesResource;
+use App\Models\Calendar;
+use App\Models\Date;
+use App\Traits\HttpResponses;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class DatesController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
+    use HttpResponses;
+
+    public function calendar_dates($calendarId)
     {
-        //
+        $this->isNotAuthorized(Calendar::where('id', $calendarId)->first());
+
+        return DatesResource::collection(
+            Date::where('calendar_id', $calendarId)->get()
+        );
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
+    public function store(StoreDatesRequest $request)
     {
-        //
+
+        $calendar = Calendar::where('id', $request->calendar_id)->first();
+
+        if (Auth::user()->id !== $calendar->user_id) {
+            return $this->error('', 'You are not authorized', 403);
+        }
+
+        if (
+            DB::table('calendar_color')
+            ->where('color_id', $request->color_id)
+            ->where('calendar_id', $request->calendar_id)
+            ->first() === null
+        ) {
+            return $this->error('', 'The relationship between the calendar and color does not exist. :(', 409);
+        }
+
+        if (Date::where('date', $request->date)->where('calendar_id', $request->calendar_id)->first() != null) {
+            return $this->error('', 'This date exists, and is already associated with a calendar', 409);
+        }
+
+        $request->validated($request->all());
+
+        //Create new calendar
+        $date = Date::create([
+            'info' => $request->info,
+            'user_id' => Auth::user()->id,
+            'calendar_id' => $request->calendar_id,
+            'date' => $request->date,
+            'color_id' => $request->color_id,
+        ]);
+
+        return new DatesResource($date);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
+    public function show(Date $date)
     {
-        //
+        if (Auth::user()->id !== $date->calendar->user_id) {
+            return $this->error('', 'You are not authorized', 403);
+        }
+
+        return new DatesResource($date);
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
+    public function update(UpdateDatesRequest $request, Date $date)
     {
-        //
+
+        if (Auth::user()->id != $date->calendar->user_id) {
+            return $this->error('', 'You are not authorized', 403);
+        }
+
+        $request->validated($request->all());
+
+        $foundColor = false;
+
+        foreach ($date->calendar->colors as $color) {
+            if ($date->color_id != $color->id) {
+                $foundColor = true;
+            }
+        }
+
+        if (!$foundColor) {
+            return $this->error('', 'The color is not associated with his calendar. What are you doing?', 403);
+        }
+
+        $date->update([
+            'info' => $request->info,
+            'color_id' => $request->color_id,
+        ]);
+
+        return new DatesResource($date->fresh());
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
+    public function destroy(Date $date)
     {
-        //
+        return $this->isNotAuthorized($date->calendar) ? $this->isNotAuthorized($date->calendar) : $date->delete();
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
+    private function isNotAuthorized($calendar)
     {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
+        if (Auth::user()->id != $calendar->user_id) {
+            return $this->error('', 'You are not authorized', 403);
+        }
     }
 }

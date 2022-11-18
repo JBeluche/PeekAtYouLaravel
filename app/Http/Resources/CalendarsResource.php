@@ -28,6 +28,8 @@ class CalendarsResource extends JsonResource
                     'user email' => $this->user->email,
                 ],
                 'colors' => ColorResource::collection($this->colors),
+                'dates' => DatesResource::collection($this->dates),
+
              
 
             ]

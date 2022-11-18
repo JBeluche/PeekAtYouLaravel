@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CalendarsController;
 use App\Http\Controllers\ColorsController;
+use App\Http\Controllers\DatesController;
 use App\Http\Controllers\PalettesController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -32,14 +33,8 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::group(['middleware' => ['auth:sanctum']], function () {
 
     //Calendars
+    Route::get('/calendar/dates/{calendarId}', [CalendarsController::class, 'calendar_dates']);
     Route::resource('/calendar', CalendarsController::class);
-    Route::controller(CalendarController::class)->group(function () {
-        Route::get('/calendar/colors', 'color_index');
-        Route::get('/calendar/color/{id}', 'color_index');
-        Route::get('/calendar/colors', 'color_index');
-        Route::get('/calendar/colors', 'color_index');
-        Route::get('/calendar/colors', 'color_index');
-    });
     
     //Palettes
     Route::resource('/color', ColorsController::class);

@@ -2,83 +2,86 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StorePalettesRequest;
+use App\Http\Requests\UpdatePalettesRequest;
+use App\Http\Resources\PalettesResource;
+use App\Models\Color;
+use App\Models\Palette;
+use App\Traits\HttpResponses;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class PalettesController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
+    use HttpResponses;
+
     public function index()
     {
-        //
+        return PalettesResource::collection(
+            Palette::where('user_id', Auth::user()->id)
+                ->get()
+        );
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
+    public function store(StorePalettesRequest $request)
     {
-        //
+        $palette = Palette::create([
+            'user_id' => Auth::user()->id,
+            'name' => $request->name,
+        ]);
+
+        foreach($request->colors as $color)
+        {
+            $color = Color::firstOrCreate(['hex_value' => $color['hex_value']]);
+            
+            //Then just add the relationship.
+            if(!$palette->hasColor($color)){
+                $palette->colors()->attach($color);
+            }
+        }
+        
+        return new PalettesResource($palette);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
+    public function show(Palette $palette)
     {
-        //
+        return $this->isNotAuthorized($palette) ? $this->isNotAuthorized($palette) : new PalettesResource($palette);
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
+    public function update(UpdatePalettesRequest $request, Palette $palette)
     {
-        //
+        if(Auth::user()->id !== $palette->user_id){
+            return $this->error('', 'You are not authorized', 403);
+        }
+
+        $paletteColors = [];
+
+        foreach($request->colors as $color)
+        {
+            $colorObj = Color::firstOrCreate(['hex_value' => $color['hex_value']]);
+
+            array_push($paletteColors, $colorObj['id']);
+        }
+
+        $palette->colors()->sync($paletteColors, true);
+
+        $palette->update([
+            'name' => $request->name,
+        ]);
+
+        return new PalettesResource($palette->fresh());
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
+    public function destroy(Palette $palette)
     {
-        //
+        return $this->isNotAuthorized($palette) ? $this->isNotAuthorized($palette) : $palette->delete();
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
+    private function isNotAuthorized($palette)
     {
-        //
+        if(Auth::user()->id !== $palette->user_id){
+            return $this->error('', 'You are not authorized', 403);
+        }
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
-    }
 }

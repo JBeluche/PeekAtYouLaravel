@@ -25,6 +25,13 @@ class Calendar extends Model
 
     public function dates()
     {
-        return $this->belongsToMany(Date::class);
+        return $this->hasMany(Date::class);
+    }
+
+    public function hasColor($color)
+    {
+        return $this->colors()
+            ->where('color_id', $color->getKey())
+            ->exists();
     }
 }

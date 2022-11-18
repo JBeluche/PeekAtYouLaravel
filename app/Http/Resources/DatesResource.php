@@ -17,7 +17,7 @@ class DatesResource extends JsonResource
         return [
             'id' => (string)$this->id,
             'attributes' => [
-                'information' => $this->information,
+                'info' => $this->info,
                 'date' => $this->date,
                 'created_at' => $this->created_at,
                 'updated_at' => $this->updated_at,

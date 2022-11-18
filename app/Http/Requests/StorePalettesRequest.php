@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateCalendarRequest extends FormRequest
+class StorePalettesRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,10 +24,9 @@ class UpdateCalendarRequest extends FormRequest
     public function rules()
     {
         return [
-            'name' => [ 'string', 'between:1,75'],
+            'name' => ['required', 'string', 'max:75'],
             'colors' => ['array'],
-            'colors.*.old_hex_value' =>  ['nullable','string', 'between:4,10'],
-            'colors.*.new_hex_value' =>  ['required', 'string', 'between:4,10'],
+            'colors.*.hex_value' =>  ['required', 'string', 'between:4,10'],
         ];
     }
 }

@@ -6,14 +6,12 @@ use App\Http\Requests\StoreCalendarsRequest;
 use App\Http\Requests\StoreColorsRequest;
 use App\Http\Requests\UpdateCalendarRequest;
 use App\Http\Resources\CalendarsResource;
+use App\Http\Resources\DatesResource;
 use App\Models\Calendar;
 use App\Models\Color;
+use App\Models\Date;
 use App\Traits\HttpResponses;
-use Illuminate\Http\Request;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 
 class CalendarsController extends Controller
 {
@@ -25,6 +23,25 @@ class CalendarsController extends Controller
             Calendar::where('user_id', Auth::user()->id)->get()
         );
     }
+
+    public function calendar_dates($calendarId)
+    {
+        $calendar = Calendar::where('id', $calendarId)->first();
+        if($calendar != null){
+            if(Auth::user()->id !== $calendar->user->id){
+                return $this->error('', 'You are not authorized', 403);
+            }
+    
+            return DatesResource::collection(
+                Date::where('calendar_id', $calendarId)->get()
+            );
+        }
+        else{
+            return $this->error('', 'No calendar found', 404);
+        }
+       
+    }
+   
 
     public function store(StoreCalendarsRequest $request)
     {
@@ -44,7 +61,9 @@ class CalendarsController extends Controller
             $color = Color::firstOrCreate(['hex_value' => $color['hex_value']]);
             
             //Then just add the relationship.
-            $calendar->colors()->attach($color);
+            if(!$calendar->hasColor($color)){
+                $calendar->colors()->attach($color);
+            }
         }
         
       return new CalendarsResource($calendar);
@@ -66,16 +85,48 @@ class CalendarsController extends Controller
         
         $calendarColors = [];
 
+        //Check if dates have a color that request is not going to pass.
+        foreach($calendar->dates as $date){
+
+            $colorFound = false;
+            
+            foreach($request->colors as $color){
+                
+                $colorObj = Color::where(['hex_value' => $color['old_hex_value']])->first();
+
+                if($colorObj != null){
+                    if($colorObj->id === $date->color_id){
+                        $colorFound = true;
+                    }
+                }
+            }
+
+            if(!$colorFound){
+                return $this->error('', 'One the dates in the calendar has a color you are removing. Send old colors from all dates to replace them correctly. Calendar not updated', 409);
+            }
+        }
+            
+
         foreach($request->colors as $color)
         {
-            //Sync the relationships
-            $colorObj = Color::firstOrCreate(['hex_value' => $color['hex_value']]);
-            
-            //Then just add the relationship.
+            $colorObj = Color::firstOrCreate(['hex_value' => $color['new_hex_value']]);
+
+            //If you have an old color and a new color.
+            if($color['old_hex_value'] != null && $color['new_hex_value'] != $color['old_hex_value']){
+                           var_dump($color['new_hex_value'], $color['old_hex_value']);
+                //Update all dates from this calendar with the new color.
+                foreach($calendar->dates as $date){
+                    if($date->color->hex_value === $color['old_hex_value']){
+                        $date->color_id = $colorObj->id;
+                        $date->save();
+                    }
+                }
+            }
             array_push($calendarColors, $colorObj['id']);
         }
 
-        //var_dump($calendarColors);
+        
+
         $calendar->colors()->sync($calendarColors, true);
 
 
@@ -83,11 +134,14 @@ class CalendarsController extends Controller
             'name' => $request->name,
         ]);
 
-        return new CalendarsResource($calendar);
+        return new CalendarsResource($calendar->fresh());
     }
 
       public function destroy(Calendar $calendar)
     {
+        if($calendar != null){
+            return $this->error('', 'No calendar found', 404); 
+        }
         return $this->isNotAuthorized($calendar) ? $this->isNotAuthorized($calendar) : $calendar->delete();
     }
 

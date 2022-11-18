@@ -27,7 +27,7 @@ class PalettesResource extends JsonResource
                     'user_name' => $this->user->name,
                     'user_email' => $this->user->email,
                 ],
-                'colors' => ColorsResource::collection($this->colors),
+                'colors' => ColorResource::collection($this->colors),
             ] 
         ];
     }
