@@ -73,6 +73,7 @@ body {
 	font-size: 4rem;
   margin-bottom: .5rem;
 	width: 100%;
+    text-align: center;
 }
 
 .sub-title {
