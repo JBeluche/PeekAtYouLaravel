@@ -21,11 +21,11 @@ return [
 
     'allowed_origins' => ['*'],
 
-    'allowed_origins_patterns' => ['*'], //not safe?
+    'allowed_origins_patterns' => [''], //not safe?
 
     'allowed_headers' => ['*'],
 
-    'exposed_headers' => ['*'], //not safe?
+    'exposed_headers' => [''], //not safe?
 
     'max_age' => 0,
 
