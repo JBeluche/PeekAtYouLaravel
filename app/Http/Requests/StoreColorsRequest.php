@@ -24,8 +24,8 @@ class StoreColorsRequest extends FormRequest
     public function rules()
     {
         return [
-            'hex_value' => ['required', 'string', 'max:10'],
-
+            'colors' => ['array'],
+            'colors.*.hex_value' => ['required', 'string', 'max:10'],
         ];
     }
 }

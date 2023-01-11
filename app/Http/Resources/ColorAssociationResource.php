@@ -4,7 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class PaletteResource extends JsonResource
+class ColorAssociationResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -17,16 +17,16 @@ class PaletteResource extends JsonResource
         return [
             'id' => (string)$this->id,
             'attributes' => [
-                'name' => $this->name,
+                'association_text' => $this->association_text,
                 'created_at' => $this->created_at,
                 'updated_at' => $this->updated_at,
             ],
             'relationsips' => [
-                'user' => [
-                    'id' => (string)$this->user->id,
-                    'user_name' => $this->user->name,
-                    'user_email' => $this->user->email,
-                ],
+                'color' => $this->color->hex_value,
+                'calendar' => new CalendarResource($this->calendar),
+
+             
+
             ]
         ];
     }

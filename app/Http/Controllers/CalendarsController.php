@@ -6,6 +6,7 @@ use App\Http\Requests\StoreCalendarsRequest;
 use App\Http\Requests\StoreColorsRequest;
 use App\Http\Requests\UpdateCalendarRequest;
 use App\Http\Resources\CalendarsResource;
+use App\Http\Resources\CalendarResource;
 use App\Http\Resources\DatesResource;
 use App\Models\Calendar;
 use App\Models\Color;
@@ -17,6 +18,7 @@ class CalendarsController extends Controller
 {
     use HttpResponses;
 
+    //Get all calendars
     public function index()
     {
         return CalendarsResource::collection(
@@ -42,7 +44,7 @@ class CalendarsController extends Controller
        
     }
    
-
+    //Create new calendar
     public function store(StoreCalendarsRequest $request)
     {
 
@@ -52,21 +54,11 @@ class CalendarsController extends Controller
         $calendar = Calendar::create([
             'user_id' => Auth::user()->id,
             'name' => $request->name,
+            'is_bullet_calendar' => $request->is_bullet_calendar,
         ]);
 
-        //Create all the colors and relations
-        foreach($request->colors as $color)
-        {
-            //Check if color exist, otherwise create it.
-            $color = Color::firstOrCreate(['hex_value' => $color['hex_value']]);
-            
-            //Then just add the relationship.
-            if(!$calendar->hasColor($color)){
-                $calendar->colors()->attach($color);
-            }
-        }
         
-      return new CalendarsResource($calendar);
+      return new CalendarResource($calendar);
     }
 
     public function show(Calendar $calendar)

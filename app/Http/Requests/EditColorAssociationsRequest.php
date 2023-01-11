@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreDatesRequest extends FormRequest
+class EditColorAssociationsRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,10 +24,9 @@ class StoreDatesRequest extends FormRequest
     public function rules()
     {
         return [
-            'long_note' => ['nullable', 'string', 'max:255'],
-            'displayed_note' => ['nullable', 'string', 'max:42'],
-            'date' => ['required', 'date_format:Y-m-d'],
-            'calendar_id' => ['required', 'numeric'],
+            'items.*.id' => ['required', 'numeric'],
+            'items.*.color_id' => ['required', 'numeric'],
+            'items.*.association_text' => ['required', 'string', 'max:250'],
         ];
     }
 }

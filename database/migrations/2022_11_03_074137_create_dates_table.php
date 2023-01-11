@@ -15,13 +15,12 @@ return new class extends Migration
     {
         Schema::create('dates', function (Blueprint $table) {
             $table->id();
-            $table->string('info')->nullable();
+            $table->string('long_note')->nullable();
+            $table->string('displayed_note', 42)->nullable();
             $table->date('date');
 
             $table->unsignedBigInteger('calendar_id');
-            $table->unsignedBigInteger('color_id')->nullable();
             $table->foreign('calendar_id')->references('id')->on('calendars')->onDelete('cascade');
-            $table->foreign('color_id')->references('id')->on('colors')->onDelete('cascade');
 
             $table->timestamps();
         });

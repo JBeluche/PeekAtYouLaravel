@@ -23,7 +23,6 @@ class ColorsResource extends JsonResource
             ],
             'relationsips' => [
                 'calendars' => CalendarResource::collection($this->calendars),
-                'palettes' => PaletteResource::collection($this->palettes),
                 'dates' => DatesResource::collection($this->dates),
 
             ]

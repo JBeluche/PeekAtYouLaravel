@@ -10,7 +10,7 @@ class Calendar extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name', 'user_id', 'colors'
+        'name', 'user_id', 'is_bullet_calendar'
     ];
 
     public function user()
@@ -18,9 +18,9 @@ class Calendar extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function colors()
+    public function colorAssocitations()
     {
-        return $this->belongsToMany(Color::class);
+        return $this->hasMany(ColorAssociation::class);
     }
 
     public function dates()

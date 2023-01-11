@@ -29,6 +29,8 @@ class CalendarsResource extends JsonResource
                 ],
                 'colors' => ColorResource::collection($this->colors),
                 'dates' => DatesResource::collection($this->dates),
+                'color_associations' => ColorAssociationResource::collection($this->colorAssociations),
+
 
              
 

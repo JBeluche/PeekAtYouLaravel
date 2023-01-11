@@ -16,6 +16,7 @@ return new class extends Migration
         Schema::create('calendars', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->boolean('is_bullet_calendar');
             
             $table->unsignedBigInteger('user_id');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');

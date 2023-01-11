@@ -25,8 +25,7 @@ class StoreCalendarsRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:75'],
-            'colors' => ['array'],
-            'colors.*.hex_value' =>  ['required', 'string', 'max:10'],
+            'is_bullet_calendar' => ['required', 'int', 'max:1'],
         ];
     }
 }

@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StorePalettesRequest extends FormRequest
+class StoreColorRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,9 +24,8 @@ class StorePalettesRequest extends FormRequest
     public function rules()
     {
         return [
-            'name' => ['required', 'string', 'max:75'],
-            'colors' => ['array'],
-            'colors.*.hex_value' =>  ['required', 'string', 'between:4,10'],
+            'hex_value' => ['required', 'string', 'max:10'],
+
         ];
     }
 }

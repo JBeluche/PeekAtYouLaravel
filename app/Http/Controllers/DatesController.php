@@ -8,9 +8,7 @@ use App\Http\Resources\DatesResource;
 use App\Models\Calendar;
 use App\Models\Date;
 use App\Traits\HttpResponses;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 
 class DatesController extends Controller
 {
@@ -28,21 +26,17 @@ class DatesController extends Controller
     public function store(StoreDatesRequest $request)
     {
 
+        //Check if calendar id valid, and from the same user
         $calendar = Calendar::where('id', $request->calendar_id)->first();
+        if(!$calendar){
+            return $this->error('', 'Wrong calendar id', 409);
+        }
 
         if (Auth::user()->id !== $calendar->user_id) {
             return $this->error('', 'You are not authorized', 403);
         }
 
-        if (
-            DB::table('calendar_color')
-            ->where('color_id', $request->color_id)
-            ->where('calendar_id', $request->calendar_id)
-            ->first() === null
-        ) {
-            return $this->error('', 'The relationship between the calendar and color does not exist. :(', 409);
-        }
-
+        //Check if date for this calendar is already exixsting
         if (Date::where('date', $request->date)->where('calendar_id', $request->calendar_id)->first() != null) {
             return $this->error('', 'This date exists, and is already associated with a calendar', 409);
         }
@@ -51,11 +45,11 @@ class DatesController extends Controller
 
         //Create new calendar
         $date = Date::create([
-            'info' => $request->info,
+            'long_note' => $request->long_note,
+            'displayed_note' => $request->displayed_note,
             'user_id' => Auth::user()->id,
             'calendar_id' => $request->calendar_id,
             'date' => $request->date,
-            'color_id' => $request->color_id,
         ]);
 
         return new DatesResource($date);
@@ -79,21 +73,9 @@ class DatesController extends Controller
 
         $request->validated($request->all());
 
-        $foundColor = false;
-
-        foreach ($date->calendar->colors as $color) {
-            if ($date->color_id != $color->id) {
-                $foundColor = true;
-            }
-        }
-
-        if (!$foundColor) {
-            return $this->error('', 'The color is not associated with his calendar. What are you doing?', 403);
-        }
-
         $date->update([
-            'info' => $request->info,
-            'color_id' => $request->color_id,
+            'long_note' => $request->long_note,
+            'displayed_note' => $request->displayed_note,
         ]);
 
         return new DatesResource($date->fresh());
@@ -110,4 +92,5 @@ class DatesController extends Controller
             return $this->error('', 'You are not authorized', 403);
         }
     }
+    
 }

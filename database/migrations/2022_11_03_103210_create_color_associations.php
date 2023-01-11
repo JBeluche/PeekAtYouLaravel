@@ -13,12 +13,18 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('color_palette', function (Blueprint $table) {
+        Schema::create('color_associations', function (Blueprint $table) {
+        
+            $table->id();
+            $table->string('association_text');
             $table->unsignedBigInteger('color_id');
-            $table->unsignedBigInteger('palette_id');
+            $table->unsignedBigInteger('calendar_id');
 
             $table->foreign('color_id')->references('id')->on('colors')->onDelete('cascade');
-            $table->foreign('palette_id')->references('id')->on('palettes')->onDelete('cascade');
+            $table->foreign('calendar_id')->references('id')->on('calendars')->onDelete('cascade');
+
+            $table->timestamps();
+
         });
     }
 
@@ -29,6 +35,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('color_palette');
+        Schema::dropIfExists('calendar_color');
     }
 };

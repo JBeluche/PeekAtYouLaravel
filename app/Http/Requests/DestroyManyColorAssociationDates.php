@@ -2,9 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\HasAccessTo;
 use Illuminate\Foundation\Http\FormRequest;
 
-class UpdatePalettesRequest extends FormRequest
+class DestroyManyColorAssociationDates extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,9 +25,7 @@ class UpdatePalettesRequest extends FormRequest
     public function rules()
     {
         return [
-            'name' => ['required', 'string', 'max:75'],
-            'colors' => ['array'],
-            'colors.*.hex_value' =>  ['required', 'string', 'between:4,10'],
+            'id.*' => ['required', 'numeric', 'exists:color_association_dates,id', new HasAccessTo('COLOR_ASSOCIATION_DATE')],
         ];
     }
 }

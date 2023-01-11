@@ -5,27 +5,23 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Date extends Model
+class ColorAssociation extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'displayed_note', 'long_note', 'date', 'calendar_id',
+        'calendar_id',
+        'color_id',
+        'association_text',
     ];
 
-    public function colorAssociations()
+    public function color()
     {
-        return $this->hasMany(ColorAssociationDate::class);
+        return $this->belongsTo(Color::class);
     }
-
+    
     public function calendar()
     {
         return $this->belongsTo(Calendar::class);
     }
-
-    public function dates()
-    {
-        return $this->hasMany(Date::class);
-    }
-
 }
