@@ -9,17 +9,6 @@ use App\Http\Controllers\DatesController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| is assigned the "api" middleware group. Enjoy building your API!
-|
-*/
-
 Route::middleware(['auth:sanctum', 'cors'])->get('/user', function (Request $request) {
     return $request->user();
 });
@@ -29,36 +18,37 @@ Route::middleware(['auth:sanctum', 'cors'])->get('/user', function (Request $req
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
 
-
-//Private
-Route::group(['middleware' => ['auth:sanctum']], function () {
+//Private, users only
+Route::group(['middleware' => ['auth:sanctum', 'abilities:user']], function () {
 
     //Calendars
-    Route::get('/calendar/dates/{calendarId}', [CalendarsController::class, 'calendar_dates']);
     Route::apiResource('/calendar', CalendarsController::class);
 
     //Dates
     Route::apiResource('/date', DatesController::class);
+    Route::get('/dates/calendar/{calendar}', [DatesController::class, 'datesByCalendar']);
 
-    
-    //Colors
-    Route::apiResource('/color', ColorsController::class);
-    Route::post('/color/many', [ColorsController::class, 'storeMany']);
-    
     //Color Associations
-    Route::post('/color_association', [ColorAssociationsController::class, 'storeMany']);
-    Route::get('/color_association/{calendar_id}', [ColorAssociationsController::class, 'showByCalendar']);
-    Route::patch('/color_association', [ColorAssociationsController::class, 'editMany']);
+    Route::post('/color_association/{calendar}', [ColorAssociationsController::class, 'storeMany']);
+    Route::get('/color_association/{calendar}', [ColorAssociationsController::class, 'showByCalendar']);
+    Route::patch('/color_association/{calendar}', [ColorAssociationsController::class, 'editMany']);
     Route::delete('/color_association', [ColorAssociationsController::class, 'destroyMany']);
 
     //Color Associations Date
-    Route::post('/color_association_date', [ColorAssociationDatesController::class, 'storeMany']);
-    Route::get('/color_association_date/{calendar_id}', [ColorAssociationDatesController::class, 'showByDate']);
-    Route::patch('/color_association_date', [ColorAssociationDatesController::class, 'updateMany']);
+    Route::post('/color_association_date/{date}', [ColorAssociationDatesController::class, 'storeMany']);
+    Route::get('/color_association_date/{date}', [ColorAssociationDatesController::class, 'showByDate']);
+    Route::patch('/color_association_date/{date}', [ColorAssociationDatesController::class, 'updateMany']);
     Route::delete('/color_association_date', [ColorAssociationDatesController::class, 'destroyMany']);
 
-
-    
     //Logout
     Route::post('/logout', [AuthController::class, 'logout']);
+});
+
+//Private, admin only
+Route::group(['middleware' => ['auth:sanctum', 'abilities:server']], function () {
+
+    //Colors
+    Route::apiResource('/color', ColorsController::class);
+    Route::post('/colors', [ColorsController::class, 'storeMany']);
+    Route::patch('/colors', [ColorsController::class, 'updateMany']);
 });

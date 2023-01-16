@@ -8,9 +8,8 @@ use App\Rules\CombinationExists;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 
-class StoreColorAssociationDateRequest extends FormRequest
+class UpdateColorAssociationDatesRequest extends FormRequest
 {
-
     public function authorize()
     {
         $calendar = Calendar::find($this->route('date')->calendar_id);
@@ -25,15 +24,10 @@ class StoreColorAssociationDateRequest extends FormRequest
     public function rules()
     {
         return [
-            'color_association_dates' => ['required', 'array'],
-            'color_association_dates.*.color_association_id' => [
-                'required', 'integer', 'distinct',
-                'exists:color_associations,id',
-                new CalendarIdCheck,
-                new CombinationExists('color_association_dates', 'store')
-            ],
+            'color_association_dates' => ['array', 'required'],
+            'color_association_dates.*.id' => ['required', 'integer', 'exists:color_association_dates', 'distinct', new CombinationExists('color_association_dates', 'update')],
+            'color_association_dates.*.color_association_id' => ['required', 'integer', 'exists:color_associations,id', 'distinct', new CalendarIdCheck,],
             'color_association_dates.*.extra_value' => ['required', 'integer', 'between:0,10'],
-
         ];
     }
 }

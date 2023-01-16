@@ -18,7 +18,7 @@ class Calendar extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function colorAssocitations()
+    public function colorAssociations()
     {
         return $this->hasMany(ColorAssociation::class);
     }
@@ -28,10 +28,4 @@ class Calendar extends Model
         return $this->hasMany(Date::class);
     }
 
-    public function hasColor($color)
-    {
-        return $this->colors()
-            ->where('color_id', $color->getKey())
-            ->exists();
-    }
 }

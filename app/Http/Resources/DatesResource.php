@@ -14,8 +14,7 @@ class DatesResource extends JsonResource
      */
     public function toArray($request)
     {
-
-        $date = [
+        return [
             'id' => (string)$this->id,
             'attributes' => [
                 'long_note' => $this->long_note,
@@ -24,39 +23,11 @@ class DatesResource extends JsonResource
                 'created_at' => $this->created_at,
                 'updated_at' => $this->updated_at,
             ],
-        ];
-
-        //If no color_associations yet
-        if ($this->color_association_date === null) {
-            return array_merge($date, [
-                'relationsips' => [
-                    'calendar' => [
-                        'id' => (string)$this->calendar->id,
-                        'name' => $this->calendar->name,
-                        'user' => $this->calendar->user->name,
-                    ],
-                    'color_association' => [
-                        ''
-                    ],
-
-                ]
-            ]);
-        }
-
-        //All the data
-        return array_merge($date, [
             'relationsips' => [
-                'calendar' => [
-                    'id' => (string)$this->calendar->id,
-                    'name' => $this->calendar->name,
-                    'user' => $this->calendar->user->name,
-                ],
-                'color_association' => [
-                    'id' => (string)$this->color_association_date->id,
-                    'extra_value' => $this->color_association_date->extra_value,
-                    'color' => $this->color_association_date->color->hex_value,
-                ],
+                'color_association_dates' => new ColorAssociationDateResource($this->whenLoaded('color_association_dates')),
+                'calendars' => new CalendarResource($this->whenLoaded('calendar')),
+
             ]
-        ]);
+        ];
     }
 }

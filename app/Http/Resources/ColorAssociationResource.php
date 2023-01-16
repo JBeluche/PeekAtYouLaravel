@@ -22,10 +22,8 @@ class ColorAssociationResource extends JsonResource
                 'updated_at' => $this->updated_at,
             ],
             'relationsips' => [
-                'color' => $this->color->hex_value,
-                'calendar' => new CalendarResource($this->calendar),
-
-             
+                'colors' => $this->color->hex_value,
+                'calendars' => new CalendarResource($this->whenLoaded('calendar')),
 
             ]
         ];

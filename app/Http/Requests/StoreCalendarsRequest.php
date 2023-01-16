@@ -6,26 +6,16 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class StoreCalendarsRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     *
-     * @return bool
-     */
     public function authorize()
     {
         return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, mixed>
-     */
     public function rules()
     {
         return [
             'name' => ['required', 'string', 'max:75'],
-            'is_bullet_calendar' => ['required', 'int', 'max:1'],
+            'is_bullet_calendar' => ['required', 'integer', 'max:1'],
         ];
     }
 }

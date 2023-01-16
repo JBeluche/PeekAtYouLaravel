@@ -6,7 +6,6 @@ use App\Http\Requests\LoginUserRequest;
 use App\Http\Requests\StoreUserRequest;
 use App\Models\User;
 use App\Traits\HttpResponses;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth;
 
@@ -25,10 +24,7 @@ class AuthController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
-        return $this->success([
-            'user' => $user,
-            'token' => $user->createToken('Api token of ' . $user->name)->plainTextToken
-        ]);
+        return $this->finish($user);
     }
 
     public function register(StoreUserRequest $request)
@@ -41,19 +37,29 @@ class AuthController extends Controller
             'password' => Hash::make($request->password)
         ]);
 
-        return $this->success([
-            'user' => $user,
-            'token' => $user->createToken('API Token of ' . $user->name)->plainTextToken,
-        ]);
+        return $this->finish($user);
     }
 
     public function logout()
     {
-
         Auth::user()->currentAccessToken()->delete();
 
         return $this->success([
             'message' => 'You have successfully been loged out and token is gone.'
+        ]);
+    }
+
+    private function finish($user)
+    {
+        $ablilities = ['user'];
+
+        if ($user->id === 1 && $user->email === 'j.beluche@outlook.com') {
+            $ablilities = ['user', 'server'];
+        }
+
+        return $this->success([
+            'user' => $user,
+            'token' => $user->createToken('API Token of ' . $user->name, $ablilities)->plainTextToken,
         ]);
     }
 }
