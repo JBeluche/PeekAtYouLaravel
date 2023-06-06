@@ -21,6 +21,9 @@ Route::post('/register', [AuthController::class, 'register']);
 //Private, users only
 Route::group(['middleware' => ['auth:sanctum', 'abilities:user']], function () {
 
+    //Colors
+    Route::get('/color', [ColorsController::class, 'index']);
+
     //Calendars
     Route::apiResource('/calendar', CalendarsController::class);
 
@@ -46,7 +49,6 @@ Route::group(['middleware' => ['auth:sanctum', 'abilities:user']], function () {
 
 //Private, admin only
 Route::group(['middleware' => ['auth:sanctum', 'abilities:server']], function () {
-
     //Colors
     Route::apiResource('/color', ColorsController::class);
     Route::post('/colors', [ColorsController::class, 'storeMany']);
