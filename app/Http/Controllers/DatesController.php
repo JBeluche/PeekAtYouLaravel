@@ -16,7 +16,19 @@ class DatesController extends Controller
 
     public function datesByCalendar(Calendar $calendar)
     {
-        return $this->isNotAuthorized($calendar) ? $this->isNotAuthorized($calendar) : DatesResource::collection($calendar->dates);
+
+        if (Auth::user()->id != $calendar->user_id) {
+            return $this->error('', 'You are not authorized', 403);
+        }
+
+
+        $dates = Date::where('calendar_id', '=', $calendar->id)
+                ->whereYear('created_at', '=', 2023)
+                ->whereMonth('created_at', '=', 07)
+                ->get();
+
+
+        return  DatesResource::collection($dates);
     }
 
     public function store(StoreDatesRequest $request)
@@ -27,6 +39,8 @@ class DatesController extends Controller
             'user_id' => Auth::user()->id,
             'calendar_id' => $request->calendar_id,
             'date' => $request->date,
+            'extra_value' => $request->extra_value,
+            'color_association_id' => $request->color_association_id,
         ]);
 
         return new DatesResource($date);
@@ -42,6 +56,8 @@ class DatesController extends Controller
         $date->update([
             'long_note' => $request->long_note,
             'displayed_note' => $request->displayed_note,
+            'extra_value' => $request->extra_value,
+            'color_association_id' => $request->color_association_id,
         ]);
 
         return new DatesResource($date->fresh());

@@ -13,19 +13,18 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('color_association_dates', function (Blueprint $table) {
+        Schema::create('color_associations', function (Blueprint $table) {
+        
             $table->id();
-            $table->unsignedBigInteger('date_id');
-            $table->unsignedBigInteger('color_association_id');
-            $table->tinyInteger('extra_value')->length(1);
+            $table->string('association_text'); 
+            $table->integer('color_hex_value')->length(6);
 
-            $table->foreign('date_id')->references('id')->on('dates')->onDelete('cascade');
-            $table->foreign('color_association_id')->references('id')->on('color_associations')->onDelete('cascade');
+            $table->unsignedBigInteger('calendar_id');
+            $table->foreign('calendar_id')->references('id')->on('calendars')->onDelete('cascade');
 
             $table->timestamps();
 
         });
-
     }
 
     /**

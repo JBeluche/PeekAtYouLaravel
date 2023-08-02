@@ -26,9 +26,11 @@ class ColorAssociationsController extends Controller
 
         foreach ($request->color_associations as $association) {
 
+            //dd($association['color_hex_value']);
+
             $colorAssociation = ColorAssociation::create([
                 'calendar_id' => $calendar->id,
-                'color_id' => $association['color_id'],
+                'color_hex_value' => $association['color_hex_value'],
                 'association_text' => $association['association_text'],
             ]);
             array_push($associations, $colorAssociation);
@@ -45,7 +47,7 @@ class ColorAssociationsController extends Controller
 
         foreach ($request->color_associations as $association) {
             $colorAssociation = ColorAssociation::find($association['id']);
-            $colorAssociation->color_id = $association['color_id'];
+            $colorAssociation->color_hex_value = $association['color_hex_value'];
             $colorAssociation->association_text = $association['association_text'];
 
             $colorAssociation->save();

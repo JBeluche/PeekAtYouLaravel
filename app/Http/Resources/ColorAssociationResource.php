@@ -18,11 +18,11 @@ class ColorAssociationResource extends JsonResource
             'id' => (string)$this->id,
             'attributes' => [
                 'association_text' => $this->association_text,
+                'color_hex_value' => $this->color_hex_value,
                 'created_at' => $this->created_at,
                 'updated_at' => $this->updated_at,
             ],
             'relationsips' => [
-                'colors' => $this->color->hex_value,
                 'calendars' => new CalendarResource($this->whenLoaded('calendar')),
 
             ]

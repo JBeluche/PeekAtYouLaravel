@@ -18,9 +18,14 @@ return new class extends Migration
             $table->string('long_note')->nullable();
             $table->string('displayed_note', 42)->nullable();
             $table->date('date');
+            $table->tinyInteger('extra_value')->length(1)->nullable();
+
 
             $table->unsignedBigInteger('calendar_id');
             $table->foreign('calendar_id')->references('id')->on('calendars')->onDelete('cascade');
+
+            $table->unsignedBigInteger('color_association_id');
+            $table->foreign('color_association_id')->references('id')->on('color_associations')->onDelete('cascade');
 
             $table->timestamps();
         });

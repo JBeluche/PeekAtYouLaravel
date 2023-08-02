@@ -11,15 +11,10 @@ class ColorAssociation extends Model
 
     protected $fillable = [
         'calendar_id',
-        'color_id',
+        'color_hex_value',
         'association_text',
     ];
 
-    public function color()
-    {
-        return $this->belongsTo(Color::class);
-    }
-    
     public function calendar()
     {
         return $this->belongsTo(Calendar::class);

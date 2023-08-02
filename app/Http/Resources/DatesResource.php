@@ -24,8 +24,7 @@ class DatesResource extends JsonResource
                 'updated_at' => $this->updated_at,
             ],
             'relationsips' => [
-                'color_association_dates' => new ColorAssociationDateResource($this->whenLoaded('color_association_dates')),
-                'calendars' => new CalendarResource($this->whenLoaded('calendar')),
+                'calendar' => new CalendarResource($this->whenLoaded('calendar')),
 
             ]
         ];

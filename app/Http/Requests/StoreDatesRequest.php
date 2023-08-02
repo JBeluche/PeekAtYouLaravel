@@ -27,11 +27,11 @@ class StoreDatesRequest extends FormRequest
             'displayed_note' => ['nullable', 'string', 'max:42'],
             'date' => [
                 'required', 'date_format:Y-m-d',
-                Rule::unique('dates')
-                    ->where('date', request()->all()['date'])
-                    ->where('calendar_id', request()->all()['calendar_id'])
+     
             ],
-            'calendar_id' => ['required', 'integer', 'exists:calendars,id'],
+            'calendar_id' => ['required', 'numeric', 'exists:calendars,id'],
+            'extra_value' => ['required', 'numeric', 'digits:1', 'exists:calendars,id'],
+            'color_association_id' => ['required', 'numeric',  'exists:color_associations,id'],
         ];
     }
 }
