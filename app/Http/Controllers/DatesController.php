@@ -16,20 +16,36 @@ class DatesController extends Controller
 
     public function datesByCalendar(Calendar $calendar)
     {
-
         if (Auth::user()->id != $calendar->user_id) {
             return $this->error('', 'You are not authorized', 403);
         }
 
+        $month = request()->query('month');
+        $year = request()->query('year');
 
-        $dates = Date::where('calendar_id', '=', $calendar->id)
-                ->whereYear('created_at', '=', 2023)
-                ->whereMonth('created_at', '=', 07)
+        if(strlen($month) > 2 || strlen($year) > 4){
+            return 'Sorry sir, cant do that';
+        }
+
+        if(isset($month) && isset($year)){
+            $dates = Date::where('calendar_id', '=', $calendar->id)
+                ->whereYear('created_at', '=', $year)
+                ->whereMonth('created_at', '=', $month)
                 ->get();
 
+                return  DatesResource::collection($dates);
+        }
 
-        return  DatesResource::collection($dates);
+        $dates = Date::where('calendar_id', '=', $calendar->id)
+                ->whereYear('created_at', '=', date("Y"))
+                ->get();
+
+        return $this->success(
+            DatesResource::collection($dates),
+            'We did not recieve period query succesfully, so I took everything from the current year.',
+        );
     }
+
 
     public function store(StoreDatesRequest $request)
     {
