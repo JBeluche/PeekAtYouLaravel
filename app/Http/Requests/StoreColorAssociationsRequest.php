@@ -22,7 +22,7 @@ class StoreColorAssociationsRequest extends FormRequest
         return [
             'color_associations' => ['array', 'required'],
             'color_associations.*.color_hex_value' => [
-                'required', 'numeric', 'digits:6'
+                'required', 'string', 'max:6'
             ],
             'color_associations.*.association_text' => ['required', 'string', 'max:250'],
         ];

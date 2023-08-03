@@ -22,7 +22,7 @@ class UpdateColorAssociationsRequest extends FormRequest
         return [
             'color_associations' => ['required', 'array'],
         'color_associations.*.id' => ['required', 'integer', 'exists:color_associations,id', 'distinct', /*new CombinationExists('color_associations', 'update')*/],
-            'color_associations.*.color_hex_value' => ['required', 'numeric', 'digits:6'],
+            'color_associations.*.color_hex_value' => ['required',  'string', 'max:6'],
             'color_associations.*.association_text' => ['required', 'string', 'max:250'],
         ];
     }

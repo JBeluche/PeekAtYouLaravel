@@ -17,7 +17,7 @@ return new class extends Migration
         
             $table->id();
             $table->string('association_text'); 
-            $table->integer('color_hex_value')->length(6);
+            $table->string('color_hex_value', 6);
 
             $table->unsignedBigInteger('calendar_id');
             $table->foreign('calendar_id')->references('id')->on('calendars')->onDelete('cascade');
