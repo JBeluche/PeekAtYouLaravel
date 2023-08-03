@@ -4,7 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class ColorAssociationResource extends JsonResource
+class OneCalendarResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -17,14 +17,18 @@ class ColorAssociationResource extends JsonResource
         return [
             'id' => (string)$this->id,
             'attributes' => [
-                'association_text' => $this->association_text,
-                'color_hex_value' => $this->color_hex_value,
+                'name' => $this->name,
                 'created_at' => $this->created_at,
                 'updated_at' => $this->updated_at,
             ],
             'relationships' => [
-                'calendars' => new OneCalendarResource($this->whenLoaded('calendar')),
-
+                'user' => [
+                    'id' => (string)$this->user->id,
+                    'user name' => $this->user->name,
+                    'user email' => $this->user->email,
+                ],
+                'color_associations' => ColorAssociationResource::collection($this->colorAssociations),
+                'dates' => DatesResource::collection($this->dates),
             ]
         ];
     }

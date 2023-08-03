@@ -29,20 +29,21 @@ class DatesController extends Controller
 
         if(isset($month) && isset($year)){
             $dates = Date::where('calendar_id', '=', $calendar->id)
-                ->whereYear('created_at', '=', $year)
-                ->whereMonth('created_at', '=', $month)
+                ->whereYear('date', '=', $year)
+                ->whereMonth('date', '=', $month)
                 ->get();
 
                 return  DatesResource::collection($dates);
         }
 
         $dates = Date::where('calendar_id', '=', $calendar->id)
-                ->whereYear('created_at', '=', date("Y"))
+                ->whereYear('date', '=', date("Y"))
+                ->whereMonth('date', '=', date("m"))
                 ->get();
 
         return $this->success(
             DatesResource::collection($dates),
-            'We did not recieve period query succesfully, so I took everything from the current year.',
+            'We did not recieve period query succesfully, so I took everything from the current year and month.',
         );
     }
 

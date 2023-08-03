@@ -4,7 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreCalendarsRequest;
 use App\Http\Requests\UpdateCalendarRequest;
-use App\Http\Resources\CalendarResource;
+use App\Http\Resources\OneCalendarResource;
+use App\Http\Resources\MultipleCalendarsResource;
 use App\Models\Calendar;
 use App\Traits\HttpResponses;
 use Illuminate\Support\Facades\Auth;
@@ -15,14 +16,14 @@ class CalendarsController extends Controller
 
     public function index()
     {
-        return CalendarResource::collection(
+        return MultipleCalendarsResource::collection(
             Calendar::where('user_id', Auth::user()->id)->get()
         );
     }
 
     public function show(Calendar $calendar)
     {
-        return $this->isNotAuthorized($calendar) ? $this->isNotAuthorized($calendar) : new CalendarResource($calendar);
+        return $this->isNotAuthorized($calendar) ? $this->isNotAuthorized($calendar) : new OneCalendarResource($calendar);
     }
 
     public function store(StoreCalendarsRequest $request)
@@ -33,7 +34,7 @@ class CalendarsController extends Controller
             'is_bullet_calendar' => $request->is_bullet_calendar,
         ]);
 
-        return new CalendarResource($calendar);
+        return new OneCalendarResource($calendar);
     }
 
     public function update(Calendar $calendar, UpdateCalendarRequest $request,)
@@ -42,7 +43,7 @@ class CalendarsController extends Controller
             'name' => $request->name,
         ]);
 
-        return new CalendarResource($calendar->fresh());
+        return new OneCalendarResource($calendar->fresh());
     }
 
     public function destroy(Calendar $calendar)
