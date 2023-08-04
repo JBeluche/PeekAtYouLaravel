@@ -16,16 +16,16 @@ class ColorAssociationResource extends JsonResource
     {
         return [
             'id' => (string)$this->id,
-            'attributes' => [
+           // 'attributes' => [
                 'association_text' => $this->association_text,
                 'color_hex_value' => $this->color_hex_value,
-                'created_at' => $this->created_at,
-                'updated_at' => $this->updated_at,
-            ],
-            'relationships' => [
-                'calendars' => new OneCalendarResource($this->whenLoaded('calendar')),
+                //'created_at' => $this->created_at,
+                //'updated_at' => $this->updated_at,
+            //],
+            /*'relationships' => [
+                'calendars' => new CalendarResource($this->whenLoaded('calendar')),
 
-            ]
+            ]*/
         ];
     }
 }

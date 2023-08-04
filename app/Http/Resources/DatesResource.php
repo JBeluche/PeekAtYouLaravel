@@ -15,19 +15,19 @@ class DatesResource extends JsonResource
     {
         return [
             'id' => (string)$this->id,
-            'attributes' => [
+            //'attributes' => [
                 'long_note' => $this->long_note,
                 'displayed_note' => $this->displayed_note,
                 'extra_value' => $this->extra_value,
                 'date' => $this->date,
-                'created_at' => $this->created_at,
-                'updated_at' => $this->updated_at,
-            ],
-            'relationships' => [
-                'calendar' => new OneCalendarResource($this->whenLoaded('calendar')),
+               // 'created_at' => $this->created_at,
+                //'updated_at' => $this->updated_at,
+          //  ],
+          //  'relationships' => [
+               // 'calendar' => new CalendarResource($this->whenLoaded('calendar')),
                 'color_association' => new ColorAssociationResource($this->colorAssociation),
 
-            ]
+            //]
         ];
     }
 }
