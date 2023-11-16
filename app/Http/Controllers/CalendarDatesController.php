@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StoreDatesRequest;
-use App\Http\Requests\UpdateDateRequest;
-use App\Http\Resources\DatesResource;
+use App\Http\Requests\StoreCalendarDatesRequest;
+use App\Http\Requests\UpdateCalendarDateRequest;
+use App\Http\Resources\CalendarDatesResource;
 use App\Models\Calendar;
-use App\Models\Date;
+use App\Models\CalendarDate;
 use App\Traits\HttpResponses;
 use Illuminate\Support\Facades\Auth;
 
-class DatesController extends Controller
+class CalendarDatesController extends Controller
 {
     use HttpResponses;
 
@@ -28,61 +28,59 @@ class DatesController extends Controller
         }
 
         if(isset($month) && isset($year)){
-            $dates = Date::where('calendar_id', '=', $calendar->id)
+            $calendarDates = CalendarDate::where('calendar_id', '=', $calendar->id)
                 ->whereYear('date', '=', $year)
                 ->whereMonth('date', '=', $month)
                 ->get();
 
-                return  DatesResource::collection($dates);
+                return  CalendarDatesResource::collection($calendarDates);
         }
 
-        $dates = Date::where('calendar_id', '=', $calendar->id)
+        $calendarDates = CalendarDate::where('calendar_id', '=', $calendar->id)
                 ->whereYear('date', '=', date("Y"))
                 ->whereMonth('date', '=', date("m"))
                 ->get();
 
         return $this->success(
-            DatesResource::collection($dates),
+            CalendarDatesResource::collection($calendarDates),
             'We did not recieve period query succesfully, so I took everything from the current year and month.',
         );
     }
 
 
-    public function store(StoreDatesRequest $request)
+    public function store(StoreCalendarDatesRequest $request)
     {
-        $date = Date::create([
+        $date = CalendarDate::create([
             'long_note' => $request->long_note,
             'displayed_note' => $request->displayed_note,
             'user_id' => Auth::user()->id,
             'calendar_id' => $request->calendar_id,
             'date' => $request->date,
-            'extra_value' => $request->extra_value,
             'color_association_id' => $request->color_association_id,
         ]);
 
-        return new DatesResource($date);
+        return new CalendarDatesResource($date);
     }
 
-    public function show(Date $date)
+    public function show(CalendarDate $calendarDate)
     {
-        return $this->isNotAuthorized($date->calendar) ? $this->isNotAuthorized($date->calendar) : new DatesResource($date);
+        return $this->isNotAuthorized($calendarDate->calendar) ? $this->isNotAuthorized($calendarDate->calendar) : new CalendarDatesResource($calendarDate);
     }
 
-    public function update(UpdateDateRequest $request, Date $date)
+    public function update(UpdateCalendarDateRequest $request, CalendarDate $calendarDate)
     {
-        $date->update([
+        $calendarDate->update([
             'long_note' => $request->long_note,
             'displayed_note' => $request->displayed_note,
-            'extra_value' => $request->extra_value,
             'color_association_id' => $request->color_association_id,
         ]);
 
-        return new DatesResource($date->fresh());
+        return new CalendarDatesResource($calendarDate->fresh());
     }
 
-    public function destroy(Date $date)
+    public function destroy(CalendarDate $calendarDate)
     {
-        return $this->isNotAuthorized($date->calendar) ? $this->isNotAuthorized($date->calendar) : $date->delete();
+        return $this->isNotAuthorized($calendarDate->calendar) ? $this->isNotAuthorized($calendarDate->calendar) : $calendarDate->delete();
     }
 
     private function isNotAuthorized($calendar)

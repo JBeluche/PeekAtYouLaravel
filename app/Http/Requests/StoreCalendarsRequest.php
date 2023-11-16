@@ -15,7 +15,6 @@ class StoreCalendarsRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:75'],
-            'is_bullet_calendar' => ['required', 'integer', 'max:1'],
         ];
     }
 }

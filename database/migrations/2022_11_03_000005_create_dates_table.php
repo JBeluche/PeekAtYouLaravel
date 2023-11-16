@@ -13,13 +13,12 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('dates', function (Blueprint $table) {
+        Schema::create('calendar_dates', function (Blueprint $table) {
             $table->id();
             $table->string('long_note')->nullable();
             $table->string('displayed_note', 42)->nullable();
             $table->date('date');
-            $table->tinyInteger('extra_value')->length(1)->nullable();
-
+    
 
             $table->unsignedBigInteger('calendar_id');
             $table->foreign('calendar_id')->references('id')->on('calendars')->onDelete('cascade');
@@ -38,6 +37,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('dates');
+        Schema::dropIfExists('calendar_dates');
     }
 };

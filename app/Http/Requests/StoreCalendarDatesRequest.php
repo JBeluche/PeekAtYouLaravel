@@ -7,7 +7,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
-class StoreDatesRequest extends FormRequest
+class StoreCalendarDatesRequest extends FormRequest
 {
     public function authorize()
     {
@@ -30,7 +30,6 @@ class StoreDatesRequest extends FormRequest
      
             ],
             'calendar_id' => ['required', 'numeric', 'exists:calendars,id'],
-            'extra_value' => ['required', 'numeric', 'digits:1', 'exists:calendars,id'],
             'color_association_id' => ['required', 'numeric',  'exists:color_associations,id'],
         ];
     }

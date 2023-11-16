@@ -13,13 +13,13 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('calendars', function (Blueprint $table) {
+        Schema::create('color_associations', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->boolean('is_bullet_calendar');
-            
-            $table->unsignedBigInteger('user_id');
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
+            $table->string('association_text');
+            $table->string('hex_value', 6);
+
+            $table->unsignedBigInteger('calendar_id');
+            $table->foreign('calendar_id')->references('id')->on('calendars')->onDelete('cascade');
 
             $table->timestamps();
         });
@@ -32,6 +32,6 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('calendars');
+        Schema::dropIfExists('color_associations');
     }
 };

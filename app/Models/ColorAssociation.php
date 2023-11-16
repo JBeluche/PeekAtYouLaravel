@@ -11,7 +11,7 @@ class ColorAssociation extends Model
 
     protected $fillable = [
         'calendar_id',
-        'color_hex_value',
+        'hex_value',
         'association_text',
     ];
 

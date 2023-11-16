@@ -2,7 +2,7 @@
 
 namespace App\Http\Resources;
 
-use App\Models\Date;
+use App\Models\CalendarDate;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class CalendarResource extends JsonResource
@@ -30,7 +30,7 @@ class CalendarResource extends JsonResource
                     'user email' => $this->user->email,
                 ],*/
             'color_associations' => ColorAssociationResource::collection($this->colorAssociations),
-            'dates' => DatesResource::collection($this->filterDates()),
+            'calendar_dates' => CalendarDatesResource::collection($this->filterDates()),
             // ]
         ];
     }
@@ -42,7 +42,7 @@ class CalendarResource extends JsonResource
         $year = request()->query('year');
 
         if (isset($month) && isset($year)) {
-            $dates = Date::where('calendar_id', '=', $this->id)
+            $dates = CalendarDate::where('calendar_id', '=', $this->id)
                 ->whereYear('date', '=', $year)
                 ->whereMonth('date', '=', $month)
                 ->get();
@@ -50,7 +50,7 @@ class CalendarResource extends JsonResource
             return  $dates;
         }
 
-        $dates = Date::where('calendar_id', '=', $this->id)
+        $dates = CalendarDate::where('calendar_id', '=', $this->id)
             ->whereYear('date', '=', date("Y"))
             ->whereMonth('date', '=', date("m"))
             ->get();

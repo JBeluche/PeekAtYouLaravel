@@ -5,12 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Date extends Model
+class CalendarDate extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'displayed_note', 'long_note', 'date', 'calendar_id', 'extra_value', 'color_association_id'
+        'displayed_note', 'long_note', 'date', 'calendar_id', 'color_association_id'
      ];
 
     public function colorAssociation()

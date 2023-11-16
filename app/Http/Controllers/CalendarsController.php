@@ -37,7 +37,6 @@ class CalendarsController extends Controller
         $calendar = Calendar::create([
             'user_id' => Auth::user()->id,
             'name' => $request->name,
-            'is_bullet_calendar' => $request->is_bullet_calendar,
         ]);
 
         return new CalendarResource($calendar);

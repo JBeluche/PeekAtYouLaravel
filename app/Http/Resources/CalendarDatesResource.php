@@ -3,7 +3,7 @@
 namespace App\Http\Resources;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class DatesResource extends JsonResource
+class CalendarDatesResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
