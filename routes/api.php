@@ -22,7 +22,7 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::group(['middleware' => ['auth:sanctum', 'abilities:user']], function () {
 
     //Colors
-    Route::get('/color', [ColorsController::class, 'index']);
+    //Route::get('/color', [ColorsController::class, 'index']);
 
     //Calendars
     Route::apiResource('/calendar', CalendarsController::class);
@@ -38,19 +38,19 @@ Route::group(['middleware' => ['auth:sanctum', 'abilities:user']], function () {
     Route::delete('/color_association', [ColorAssociationsController::class, 'destroyMany']);
 
     //Color Associations Date
-    Route::post('/color_association_date/{date}', [ColorAssociationDatesController::class, 'storeMany']);
-    Route::get('/color_association_date/{date}', [ColorAssociationDatesController::class, 'showByDate']);
-    Route::patch('/color_association_date/{date}', [ColorAssociationDatesController::class, 'updateMany']);
-    Route::delete('/color_association_date', [ColorAssociationDatesController::class, 'destroyMany']);
+    // Route::post('/color_association_date/{date}', [ColorAssociationDatesController::class, 'storeMany']);
+    // Route::get('/color_association_date/{date}', [ColorAssociationDatesController::class, 'showByDate']);
+    // Route::patch('/color_association_date/{date}', [ColorAssociationDatesController::class, 'updateMany']);
+    // Route::delete('/color_association_date', [ColorAssociationDatesController::class, 'destroyMany']);
 
     //Logout
     Route::post('/logout', [AuthController::class, 'logout']);
 });
 
 //Private, admin only
-Route::group(['middleware' => ['auth:sanctum', 'abilities:server']], function () {
-    //Colors
-    Route::apiResource('/color', ColorsController::class);
-    Route::post('/colors', [ColorsController::class, 'storeMany']);
-    Route::patch('/colors', [ColorsController::class, 'updateMany']);
-});
+// Route::group(['middleware' => ['auth:sanctum', 'abilities:server']], function () {
+//     //Colors
+//     Route::apiResource('/color', ColorsController::class);
+//     Route::post('/colors', [ColorsController::class, 'storeMany']);
+//     Route::patch('/colors', [ColorsController::class, 'updateMany']);
+// });
