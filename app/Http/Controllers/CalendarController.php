@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateCalendarRequest;
 use App\Http\Resources\CalendarResource;
 use App\Traits\HttpResponses;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class CalendarController extends Controller
 {
@@ -43,7 +44,15 @@ class CalendarController extends Controller
      */
     public function show(Calendar $calendar)
     {
-        return new CalendarResource($calendar);
+        try {
+            // This ensures $calendar is passed correctly by route-model binding
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'error' => 'The requested calendar could not be found.'
+            ], 404);
+        }
+
+        return $this->isNotAuthorized($calendar) ? $this->isNotAuthorized($calendar) : new CalendarResource($calendar);
     }
 
     /**
@@ -60,5 +69,12 @@ class CalendarController extends Controller
     public function destroy(Calendar $calendar)
     {
         //
+    }
+
+    private function isNotAuthorized($calendar)
+    {
+        if (Auth::user()->id !== $calendar->user_id) {
+            return $this->error('', 'You are not authorized', 403);
+        }
     }
 }
