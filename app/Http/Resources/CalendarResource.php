@@ -7,13 +7,13 @@ use Illuminate\Http\Resources\Json\JsonResource;
 
 class CalendarResource extends JsonResource
 {
-    public function toArray(Request $request)
+    public function toArray(Request $request): array
     {
         return [
             'id' => (string)$this->id,
             'name' => $this->name,
-            'color_associations' => ColorAssociationResource::collection($this->colorAssociations),
-            'calendar_dates' => CalendarDateResource::collection($this->calendarDates),
+            'color_associations' => ColorAssociationResource::collection($this->whenLoaded('colorAssociations')),
+            'calendar_dates' => CalendarDateResource::collection($this->whenLoaded('calendarDates')),
         ];
     }
 }

@@ -11,9 +11,8 @@ class CalendarDateResource extends JsonResource
     {
         return [
             'id' => (string)$this->id,
-            'long_note' => $this->long_note,
             'displayed_note' => $this->displayed_note,
-            'extra_value' => $this->extra_value,
+            'symbol' => $this->symbol,
             'date' => $this->date,
             'color_association' => new ColorAssociationResource($this->colorAssociation),
         ];

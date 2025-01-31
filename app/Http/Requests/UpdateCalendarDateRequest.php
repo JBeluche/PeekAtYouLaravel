@@ -11,7 +11,7 @@ class UpdateCalendarDateRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
@@ -22,7 +22,9 @@ class UpdateCalendarDateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'symbol' => ['nullable', 'string', 'max:255', 'required'],
+            'displayed_note' => ['numeric', 'required', 'max:255'],
+            'color_association_id' => ['numeric', 'nullable'],
         ];
     }
 }

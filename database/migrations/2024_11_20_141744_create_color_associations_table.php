@@ -18,6 +18,8 @@ return new class extends Migration
 
             $table->unsignedBigInteger('calendar_id');
             $table->foreign('calendar_id')->references('id')->on('calendars')->onDelete('cascade');
+
+            $table->unique(['calendar_id', 'hex_value']);
             
             $table->timestamps();
         });

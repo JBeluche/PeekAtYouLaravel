@@ -11,7 +11,7 @@ class CalendarDate extends Model
     use HasFactory;
 
     protected $fillable = [
-        'displayed_note', 'long_note', 'date', 'calendar_id', 'color_association_id'
+        'displayed_note', 'symbol', 'date', 'calendar_id', 'color_association_id'
      ];
 
     public function colorAssociation()
