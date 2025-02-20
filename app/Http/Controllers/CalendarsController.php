@@ -106,6 +106,7 @@ class CalendarsController extends Controller
                 $query->whereYear('date', $year)->whereMonth('date', $month);
             }
         ])->where('user_id', Auth::id())
+        ->with('colorAssociations')
           ->get();
 
         return $this->success(
