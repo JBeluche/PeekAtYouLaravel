@@ -99,17 +99,14 @@ class CalendarsController extends Controller
     {
         $month = request()->query('month', date("m"));
         $year = request()->query('year', date("Y"));
-        $userId = Auth::id(); // Get authenticated user ID
 
         // Fetch only user's calendars with filtered dates
         $calendars = Calendar::with([
             'calendarDates' => function ($query) use ($month, $year) {
                 $query->whereYear('date', $year)->whereMonth('date', $month);
             }
-        ])->where('user_id', $userId)
-          ->whereHas('calendarDates', function ($query) use ($month, $year) {
-              $query->whereYear('date', $year)->whereMonth('date', $month);
-          })->get();
+        ])->where('user_id', Auth::id())
+          ->get();
 
         return $this->success(
             'Fetched user calendars with filtered dates',
