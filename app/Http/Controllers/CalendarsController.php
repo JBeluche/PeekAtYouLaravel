@@ -95,33 +95,25 @@ class CalendarsController extends Controller
         }
     }
 
-    public function datesByCalendar(Calendar $calendar)
+    public function userCalendarsWithDates()
     {
-        // Check authorization
-        if (Auth::user()->id != $calendar->user_id) {
-            return $this->error('You are not authorized', null, 403);
-        }
-    
-        $month = request()->query('month');
-        $year = request()->query('year');
-    
-        $query = CalendarDate::where('calendar_id', $calendar->id);
-    
-        if (isset($month) && isset($year)) {
-            $query->whereYear('date', $year)->whereMonth('date', $month);
-        } else {
-            $query->whereYear('date', date("Y"))->whereMonth('date', date("m"));
-        }
-    
-        $calendarDates = $query->get();
-    
+        $month = request()->query('month', date("m"));
+        $year = request()->query('year', date("Y"));
+        $userId = Auth::id(); // Get authenticated user ID
+
+        // Fetch only user's calendars with filtered dates
+        $calendars = Calendar::with([
+            'calendarDates' => function ($query) use ($month, $year) {
+                $query->whereYear('date', $year)->whereMonth('date', $month);
+            }
+        ])->where('user_id', $userId)
+          ->whereHas('calendarDates', function ($query) use ($month, $year) {
+              $query->whereYear('date', $year)->whereMonth('date', $month);
+          })->get();
+
         return $this->success(
-            isset($month) && isset($year) ? 'Success' : 'No period query provided, returning current month data.',
-            [
-                'calendar' => new CalendarResource($calendar->load('colorAssociations')),
-                'dates' => CalendarDateResource::collection($calendarDates),
-            ]
+            'Fetched user calendars with filtered dates',
+            CalendarResource::collection($calendars)
         );
     }
-    
 }

@@ -12,7 +12,7 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 
 
+Route::get('/calendars/dates', [CalendarsController::class, 'userCalendarsWithDates'])->middleware('auth:sanctum');
 Route::apiResource('calendars', CalendarsController::class)->middleware('auth:sanctum');
-Route::get('/calendars/{calendar}/dates', [CalendarsController::class, 'datesByCalendar'])->middleware('auth:sanctum');
 
 Route::apiResource('calendar_dates', CalendarDatesController::class)->middleware('auth:sanctum');
