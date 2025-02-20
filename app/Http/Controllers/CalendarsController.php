@@ -24,7 +24,8 @@ class CalendarsController extends Controller
     {
         //Get all calendars and there dates
         return CalendarResource::collection(
-            Calendar::where('user_id', Auth::user()->id)->get()
+            Calendar::where('user_id', Auth::user()->id)->get()->load('colorAssociations')
+
         );
     }
 
@@ -41,7 +42,7 @@ class CalendarsController extends Controller
         // Add associated dates
         $calendar->colorAssociations()->createMany($request->color_associations);
 
-        return new CalendarResource($calendar);
+        return new CalendarResource($calendar->load('colorAssociations'));
     }
 
     /**
@@ -49,7 +50,7 @@ class CalendarsController extends Controller
      */
     public function show(Calendar $calendar)
     {
-        return $this->isNotAuthorized($calendar) ? $this->isNotAuthorized($calendar) : new CalendarResource($calendar);
+        return $this->isNotAuthorized($calendar) ? $this->isNotAuthorized($calendar) : new CalendarResource($calendar->load('colorAssociations'));
     }
 
     /**
@@ -96,33 +97,31 @@ class CalendarsController extends Controller
 
     public function datesByCalendar(Calendar $calendar)
     {
-
-        //Check if calendar
+        // Check authorization
         if (Auth::user()->id != $calendar->user_id) {
-            return $this->error('', 'You are not authorized', 403);
+            return $this->error('You are not authorized', null, 403);
         }
-
+    
         $month = request()->query('month');
         $year = request()->query('year');
-
+    
+        $query = CalendarDate::where('calendar_id', $calendar->id);
+    
         if (isset($month) && isset($year)) {
-            $calendarDates = CalendarDate::where('calendar_id', '=', $calendar->id)
-                ->whereYear('date', '=', $year)
-                ->whereMonth('date', '=', $month)
-                ->get();
-
-            return  CalendarDateResource::collection($calendarDates);
+            $query->whereYear('date', $year)->whereMonth('date', $month);
+        } else {
+            $query->whereYear('date', date("Y"))->whereMonth('date', date("m"));
         }
-
-        $calendarDates = CalendarDate::where('calendar_id', '=', $calendar->id)
-            ->whereYear('date', '=', date("Y"))
-            ->whereMonth('date', '=', date("m"))
-            ->get();
-
+    
+        $calendarDates = $query->get();
+    
         return $this->success(
-            CalendarDateResource::collection($calendarDates),
-            'We did not recieve period query succesfully, so I took everything from the current year and month.',
+            isset($month) && isset($year) ? 'Success' : 'No period query provided, returning current month data.',
+            [
+                'calendar' => new CalendarResource($calendar->load('colorAssociations')),
+                'dates' => CalendarDateResource::collection($calendarDates),
+            ]
         );
     }
-
+    
 }
