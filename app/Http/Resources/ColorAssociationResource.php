@@ -10,7 +10,7 @@ class ColorAssociationResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => (string)$this->id,
+            'id' => $this->id,
             'association_text' => $this->association_text,
             'hex_value' => $this->hex_value,
         ];

@@ -10,7 +10,7 @@ class CalendarDateResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id' => (string)$this->id,
+            'id' => $this->id,
             'displayed_note' => $this->displayed_note,
             'symbol' => $this->symbol,
             'date' => $this->date,
