@@ -22,7 +22,7 @@ class UpdateCalendarDateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'symbol' => ['nullable', 'string', 'max:255', 'required'],
+            'symbol' => ['nullable', 'string', 'max:255'],
             'displayed_note' => ['numeric', 'required', 'max:255'],
             'color_association_id' => ['numeric', 'nullable'],
         ];
