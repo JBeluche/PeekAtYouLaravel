@@ -23,8 +23,8 @@ class UpdateCalendarDateRequest extends FormRequest
     {
         return [
             'symbol' => ['nullable', 'string', 'max:255'],
-            'displayed_note' => ['numeric', 'required', 'max:255'],
-            'color_association_id' => ['numeric', 'nullable'],
+            'displayed_note' => ['nullable', 'string', 'max:255'],
+            'color_association_id' => ['numeric', 'required'],
         ];
     }
 }
