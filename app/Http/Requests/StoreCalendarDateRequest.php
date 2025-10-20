@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Models\Calendar;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class StoreCalendarDateRequest extends FormRequest
 {
@@ -33,10 +34,20 @@ class StoreCalendarDateRequest extends FormRequest
             'symbol' => ['nullable', 'string', 'max:42'],
             'displayed_note' => ['nullable', 'string', 'max:255'],
             'date' => [
-                'required', 'date_format:Y-m-d',
+                'required',
+                'date_format:Y-m-d',
             ],
             'calendar_id' => ['required', 'numeric', 'exists:calendars,id'],
-            'color_association_id' => ['required', 'numeric',  'exists:color_associations,id'],
+            'color_association_id' => [
+                'required',
+                'numeric',
+                //Either -1 (no color) or must exist in color_associations table
+                function ($attribute, $value, $fail) {
+                    if ($value != -1 && !\App\Models\ColorAssociation::where('id', $value)->exists()) {
+                        $fail('The selected color association is invalid.');
+                    }
+                },
+            ],
         ];
     }
 }

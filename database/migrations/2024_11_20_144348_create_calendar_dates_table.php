@@ -21,7 +21,7 @@ return new class extends Migration
             $table->foreign('calendar_id')->references('id')->on('calendars')->onDelete('cascade');
 
             $table->unsignedBigInteger('color_association_id')->nullable();
-            $table->foreign('color_association_id')->references('id')->on('color_associations')->onDelete('cascade');
+            $table->foreign('color_association_id')->references('id')->on('color_associations');
             $table->timestamps();
         });
     }

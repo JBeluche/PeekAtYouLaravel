@@ -24,7 +24,16 @@ class UpdateCalendarDateRequest extends FormRequest
         return [
             'symbol' => ['nullable', 'string', 'max:255'],
             'displayed_note' => ['nullable', 'string', 'max:255'],
-            'color_association_id' => ['numeric', 'required'],
+            'color_association_id' => [
+                'numeric',
+                'required',
+                //Either -1 (no color) or must exist in color_associations table
+                function ($attribute, $value, $fail) {
+                    if ($value != -1 && !\App\Models\ColorAssociation::where('id', $value)->exists()) {
+                        $fail('The selected color association is invalid.');
+                    }
+                },
+            ],
         ];
     }
 }

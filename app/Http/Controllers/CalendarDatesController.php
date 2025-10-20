@@ -23,13 +23,15 @@ class CalendarDatesController extends Controller
      */
     public function store(StoreCalendarDateRequest $request)
     {
+        $colorId = $request->color_association_id == -1 ? null : $request->color_association_id;
+
         $date = CalendarDate::create([
             'displayed_note' => $request->displayed_note,
             'symbol' => $request->symbol,
             'date' => $request->date,
             'user_id' => Auth::user()->id,
             'calendar_id' => $request->calendar_id,
-            'color_association_id' => $request->color_association_id,
+            'color_association_id' => $colorId,
         ]);
 
         return new CalendarDateResource($date);
@@ -48,10 +50,12 @@ class CalendarDatesController extends Controller
      */
     public function update(UpdateCalendarDateRequest $request, CalendarDate $calendarDate)
     {
+        $colorId = $request->color_association_id == -1 ? null : $request->color_association_id;
+
         $calendarDate->update([
             'symbol' => $request->symbol,
             'displayed_note' => $request->displayed_note,
-            'color_association_id' => $request->color_association_id,
+            'color_association_id' => $colorId,
         ]);
 
         return new CalendarDateResource($calendarDate->fresh());
