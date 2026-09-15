@@ -17,6 +17,10 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->string('plan')->default('free');
+            $table->boolean('signed_in')->default(false);
+            $table->boolean('backup_on')->default(false);
+            $table->timestamp('last_backup_at')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });
