@@ -22,7 +22,7 @@ class EntryFactory extends Factory
             'text' => fake()->sentence(),
             'pen_color' => fake()->hexColor(),
             'symbol' => fake()->randomElement(EntrySymbol::cases()),
-            'mark_color' => null,
+            'label_id' => null,
         ];
     }
 }

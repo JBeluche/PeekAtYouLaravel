@@ -49,7 +49,7 @@ class ModelRelationshipsTest extends TestCase
         $this->assertCount(4, $calendar->entries);
     }
 
-    public function test_an_entry_resolves_its_label_through_the_mark_colour(): void
+    public function test_an_entry_belongs_to_the_label_it_is_marked_with(): void
     {
         $calendar = Calendar::factory()->create();
         $label = Label::factory()->create([
@@ -60,21 +60,51 @@ class ModelRelationshipsTest extends TestCase
 
         $entry = Entry::factory()->create([
             'calendar_id' => $calendar->id,
-            'mark_color' => '#ff0000',
+            'label_id' => $label->id,
         ]);
 
         $this->assertTrue($entry->label->is($label));
         $this->assertSame('At home', $entry->label->name);
+        $this->assertTrue($label->entries->first()->is($entry));
     }
 
-    public function test_an_entry_may_have_no_mark_colour_and_no_symbol(): void
+    public function test_recolouring_a_label_carries_through_to_its_entries(): void
+    {
+        $label = Label::factory()->create(['color' => '#ff0000']);
+        $entry = Entry::factory()->create([
+            'calendar_id' => $label->calendar_id,
+            'label_id' => $label->id,
+        ]);
+
+        $label->update(['color' => '#0000ff']);
+
+        $this->assertSame('#0000ff', $entry->fresh()->label->color);
+    }
+
+    public function test_deleting_a_label_unmarks_its_days_without_deleting_them(): void
+    {
+        $label = Label::factory()->create();
+        $entry = Entry::factory()->create([
+            'calendar_id' => $label->calendar_id,
+            'label_id' => $label->id,
+            'text' => 'Keep this note',
+        ]);
+
+        $label->delete();
+
+        $this->assertDatabaseHas('entries', ['id' => $entry->id, 'text' => 'Keep this note']);
+        $this->assertNull($entry->fresh()->label_id);
+        $this->assertNull($entry->fresh()->label);
+    }
+
+    public function test_an_entry_may_be_unmarked_and_carry_no_symbol(): void
     {
         $entry = Entry::factory()->create([
-            'mark_color' => null,
+            'label_id' => null,
             'symbol' => EntrySymbol::None,
         ]);
 
-        $this->assertNull($entry->mark_color);
+        $this->assertNull($entry->label_id);
         $this->assertNull($entry->label);
         $this->assertSame(EntrySymbol::None, $entry->symbol);
     }

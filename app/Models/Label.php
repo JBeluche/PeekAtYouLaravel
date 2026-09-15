@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * One entry in a calendar's "label your colours" legend.
@@ -23,5 +24,15 @@ class Label extends Model
     public function calendar(): BelongsTo
     {
         return $this->belongsTo(Calendar::class);
+    }
+
+    /**
+     * The days marked with this label.
+     *
+     * @return HasMany<Entry, $this>
+     */
+    public function entries(): HasMany
+    {
+        return $this->hasMany(Entry::class);
     }
 }

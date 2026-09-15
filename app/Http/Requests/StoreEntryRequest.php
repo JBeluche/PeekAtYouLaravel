@@ -28,11 +28,11 @@ class StoreEntryRequest extends FormRequest
             'text' => ['nullable', 'string'],
             'pen_color' => ['nullable', 'string', 'max:32'],
             'symbol' => ['sometimes', Rule::enum(EntrySymbol::class)],
-            // Null clears the mark; anything else must already be in this calendar's legend.
-            'mark_color' => [
+            // Null leaves the day unmarked; otherwise the label must belong to
+            // the same calendar the entry is being written to.
+            'label_id' => [
                 'nullable',
-                'string',
-                Rule::exists('labels', 'color')->where('calendar_id', $this->input('calendar_id')),
+                Rule::exists('labels', 'id')->where('calendar_id', $this->input('calendar_id')),
             ],
         ];
     }

@@ -31,7 +31,8 @@ class EntryApiTest extends TestCase
             ->assertCreated()
             ->assertJsonPath('data.date', '2026-09-14')
             ->assertJsonPath('data.symbol', EntrySymbol::Check->value)
-            ->assertJsonPath('data.text', 'At home | Standup');
+            ->assertJsonPath('data.text', 'At home | Standup')
+            ->assertJsonPath('data.label_id', null);
     }
 
     public function test_a_user_cannot_write_onto_another_users_calendar(): void
@@ -48,44 +49,81 @@ class EntryApiTest extends TestCase
         $this->assertDatabaseCount('entries', 0);
     }
 
-    public function test_a_mark_colour_must_come_from_the_calendars_own_legend(): void
+    public function test_a_day_can_be_marked_with_a_label_from_its_own_calendar(): void
     {
         $user = User::factory()->create();
         $calendar = Calendar::factory()->create(['owner_id' => $user->id]);
-        Label::factory()->create(['calendar_id' => $calendar->id, 'color' => '#ff0000']);
-
-        $foreignLabel = Label::factory()->create(['color' => '#abcdef']);
+        $label = Label::factory()->create(['calendar_id' => $calendar->id]);
         Sanctum::actingAs($user);
 
-        // A colour from this calendar's legend is accepted.
         $this->postJson('/api/entries', [
             'calendar_id' => $calendar->id,
             'date' => '2026-09-14',
-            'mark_color' => '#ff0000',
-        ])->assertCreated()->assertJsonPath('data.mark_color', '#ff0000');
-
-        // One belonging to a different calendar is not.
-        $this->postJson('/api/entries', [
-            'calendar_id' => $calendar->id,
-            'date' => '2026-09-15',
-            'mark_color' => $foreignLabel->color,
-        ])->assertStatus(422)->assertJsonValidationErrors('mark_color');
+            'label_id' => $label->id,
+        ])->assertCreated()->assertJsonPath('data.label_id', $label->id);
     }
 
-    public function test_a_mark_colour_can_be_cleared_to_null(): void
+    public function test_a_label_from_another_calendar_is_rejected(): void
     {
         $user = User::factory()->create();
         $calendar = Calendar::factory()->create(['owner_id' => $user->id]);
-        Label::factory()->create(['calendar_id' => $calendar->id, 'color' => '#ff0000']);
-        $entry = Entry::factory()->create(['calendar_id' => $calendar->id, 'mark_color' => '#ff0000']);
+
+        // A label the caller owns, but on a different calendar.
+        $otherOwnCalendar = Calendar::factory()->create(['owner_id' => $user->id]);
+        $wrongLabel = Label::factory()->create(['calendar_id' => $otherOwnCalendar->id]);
+
+        // And one belonging to someone else entirely.
+        $foreignLabel = Label::factory()->create();
 
         Sanctum::actingAs($user);
 
-        $this->putJson("/api/entries/{$entry->id}", ['mark_color' => null])
-            ->assertOk()
-            ->assertJsonPath('data.mark_color', null);
+        foreach ([$wrongLabel, $foreignLabel] as $label) {
+            $this->postJson('/api/entries', [
+                'calendar_id' => $calendar->id,
+                'date' => '2026-09-14',
+                'label_id' => $label->id,
+            ])->assertStatus(422)->assertJsonValidationErrors('label_id');
+        }
 
-        $this->assertNull($entry->fresh()->mark_color);
+        $this->assertDatabaseCount('entries', 0);
+    }
+
+    public function test_a_mark_can_be_cleared_to_null(): void
+    {
+        $user = User::factory()->create();
+        $calendar = Calendar::factory()->create(['owner_id' => $user->id]);
+        $label = Label::factory()->create(['calendar_id' => $calendar->id]);
+        $entry = Entry::factory()->create([
+            'calendar_id' => $calendar->id,
+            'label_id' => $label->id,
+        ]);
+
+        Sanctum::actingAs($user);
+
+        $this->putJson("/api/entries/{$entry->id}", ['label_id' => null])
+            ->assertOk()
+            ->assertJsonPath('data.label_id', null);
+
+        $this->assertNull($entry->fresh()->label_id);
+    }
+
+    public function test_deleting_a_label_unmarks_the_days_that_used_it(): void
+    {
+        $user = User::factory()->create();
+        $calendar = Calendar::factory()->create(['owner_id' => $user->id]);
+        $label = Label::factory()->create(['calendar_id' => $calendar->id]);
+        $entry = Entry::factory()->create([
+            'calendar_id' => $calendar->id,
+            'label_id' => $label->id,
+        ]);
+
+        Sanctum::actingAs($user);
+
+        $this->deleteJson("/api/labels/{$label->id}")->assertOk();
+
+        $this->getJson("/api/entries/{$entry->id}")
+            ->assertOk()
+            ->assertJsonPath('data.label_id', null);
     }
 
     public function test_index_returns_only_entries_from_the_callers_calendars(): void

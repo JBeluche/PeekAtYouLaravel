@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * A single day's note on a calendar.
  */
-#[Fillable(['calendar_id', 'date', 'text', 'pen_color', 'symbol', 'mark_color'])]
+#[Fillable(['calendar_id', 'date', 'text', 'pen_color', 'symbol', 'label_id'])]
 class Entry extends Model
 {
     /** @use HasFactory<EntryFactory> */
@@ -47,12 +47,12 @@ class Entry extends Model
     }
 
     /**
-     * The legend entry this day's mark colour refers to, if any.
+     * The legend entry this day is marked with, if any.
      *
      * @return BelongsTo<Label, $this>
      */
     public function label(): BelongsTo
     {
-        return $this->belongsTo(Label::class, 'mark_color', 'color');
+        return $this->belongsTo(Label::class);
     }
 }

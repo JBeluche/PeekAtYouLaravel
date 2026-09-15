@@ -23,11 +23,11 @@ class UpdateEntryRequest extends FormRequest
             'text' => ['nullable', 'string'],
             'pen_color' => ['nullable', 'string', 'max:32'],
             'symbol' => ['sometimes', Rule::enum(EntrySymbol::class)],
-            // Null clears the mark; anything else must already be in this calendar's legend.
-            'mark_color' => [
+            // Null clears the mark; otherwise the label must belong to the
+            // calendar this entry already lives on.
+            'label_id' => [
                 'nullable',
-                'string',
-                Rule::exists('labels', 'color')
+                Rule::exists('labels', 'id')
                     ->where('calendar_id', $this->route('entry')->calendar_id),
             ],
         ];

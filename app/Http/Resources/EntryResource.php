@@ -22,7 +22,8 @@ class EntryResource extends JsonResource
             'text' => $this->text,
             'pen_color' => $this->pen_color,
             'symbol' => $this->symbol,
-            'mark_color' => $this->mark_color,
+            'label_id' => $this->label_id,
+            'label' => new LabelResource($this->whenLoaded('label')),
         ];
     }
 }
