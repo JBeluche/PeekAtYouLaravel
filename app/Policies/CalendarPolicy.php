@@ -9,16 +9,16 @@ class CalendarPolicy
 {
     public function view(User $user, Calendar $calendar): bool
     {
-        return $calendar->owner_id === $user->id;
+        return $calendar->owner()->is($user);
     }
 
     public function update(User $user, Calendar $calendar): bool
     {
-        return $calendar->owner_id === $user->id;
+        return $calendar->owner()->is($user);
     }
 
     public function delete(User $user, Calendar $calendar): bool
     {
-        return $calendar->owner_id === $user->id;
+        return $calendar->owner()->is($user);
     }
 }

@@ -7,8 +7,11 @@ use App\Http\Controllers\Api\LabelController;
 use App\Http\Controllers\Api\SettingController;
 use Illuminate\Support\Facades\Route;
 
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
+// Throttled per IP to slow down credential stuffing and sign-up spam.
+Route::middleware('throttle:10,1')->group(function () {
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/login', [AuthController::class, 'login']);
+});
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);

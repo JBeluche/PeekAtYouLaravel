@@ -4,10 +4,11 @@ namespace Database\Factories;
 
 use App\Enums\EntrySymbol;
 use App\Models\Calendar;
+use App\Models\Entry;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<\App\Models\Entry>
+ * @extends Factory<Entry>
  */
 class EntryFactory extends Factory
 {
@@ -18,11 +19,12 @@ class EntryFactory extends Factory
     {
         return [
             'calendar_id' => Calendar::factory(),
-            'date' => fake()->dateTimeThisYear()->format('Y-m-d'),
+            // Unique, because a calendar holds at most one entry per day.
+            'date' => fake()->unique()->date(),
             'text' => fake()->sentence(),
             'pen_color' => fake()->hexColor(),
             'symbol' => fake()->randomElement(EntrySymbol::cases()),
-            'label_id' => null,
+            'mark_color' => null,
         ];
     }
 }

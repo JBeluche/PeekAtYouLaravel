@@ -49,63 +49,25 @@ class ModelRelationshipsTest extends TestCase
         $this->assertCount(4, $calendar->entries);
     }
 
-    public function test_an_entry_belongs_to_the_label_it_is_marked_with(): void
+    public function test_a_label_names_a_colour_without_linking_to_any_day(): void
     {
         $calendar = Calendar::factory()->create();
-        $label = Label::factory()->create([
-            'calendar_id' => $calendar->id,
-            'color' => '#ff0000',
-            'name' => 'At home',
-        ]);
+        Label::factory()->create(['calendar_id' => $calendar->id, 'color' => '#ff0000', 'name' => 'At home']);
+        $entry = Entry::factory()->create(['calendar_id' => $calendar->id, 'mark_color' => '#ff0000']);
 
-        $entry = Entry::factory()->create([
-            'calendar_id' => $calendar->id,
-            'label_id' => $label->id,
-        ]);
+        $calendar->labels()->delete();
 
-        $this->assertTrue($entry->label->is($label));
-        $this->assertSame('At home', $entry->label->name);
-        $this->assertTrue($label->entries->first()->is($entry));
-    }
-
-    public function test_recolouring_a_label_carries_through_to_its_entries(): void
-    {
-        $label = Label::factory()->create(['color' => '#ff0000']);
-        $entry = Entry::factory()->create([
-            'calendar_id' => $label->calendar_id,
-            'label_id' => $label->id,
-        ]);
-
-        $label->update(['color' => '#0000ff']);
-
-        $this->assertSame('#0000ff', $entry->fresh()->label->color);
-    }
-
-    public function test_deleting_a_label_unmarks_its_days_without_deleting_them(): void
-    {
-        $label = Label::factory()->create();
-        $entry = Entry::factory()->create([
-            'calendar_id' => $label->calendar_id,
-            'label_id' => $label->id,
-            'text' => 'Keep this note',
-        ]);
-
-        $label->delete();
-
-        $this->assertDatabaseHas('entries', ['id' => $entry->id, 'text' => 'Keep this note']);
-        $this->assertNull($entry->fresh()->label_id);
-        $this->assertNull($entry->fresh()->label);
+        $this->assertSame('#ff0000', $entry->fresh()->mark_color);
     }
 
     public function test_an_entry_may_be_unmarked_and_carry_no_symbol(): void
     {
         $entry = Entry::factory()->create([
-            'label_id' => null,
+            'mark_color' => null,
             'symbol' => EntrySymbol::None,
         ]);
 
-        $this->assertNull($entry->label_id);
-        $this->assertNull($entry->label);
+        $this->assertNull($entry->mark_color);
         $this->assertSame(EntrySymbol::None, $entry->symbol);
     }
 
@@ -120,25 +82,35 @@ class ModelRelationshipsTest extends TestCase
         $this->assertSame(EntrySymbol::Check, $entry->fresh()->symbol);
     }
 
+    public function test_entry_dates_are_stored_without_a_time(): void
+    {
+        $entry = Entry::factory()->create(['date' => '2026-09-14']);
+
+        $this->assertDatabaseHas('entries', ['id' => $entry->id, 'date' => '2026-09-14']);
+    }
+
     public function test_settings_default_to_stroke_day_marks(): void
     {
         $user = User::factory()->create();
         $setting = Setting::query()->create(['user_id' => $user->id]);
 
         $this->assertSame(DayMarkStyle::Stroke, $setting->fresh()->day_mark_style);
-        $this->assertSame(14, $setting->fresh()->note_font_size);
+        $this->assertSame(14.0, $setting->fresh()->note_font_size);
         $this->assertSame('sans', $setting->fresh()->note_font);
     }
 
-    public function test_deleting_a_calendar_cascades_to_labels_and_entries(): void
+    public function test_deleting_a_calendar_soft_deletes_its_labels_and_entries(): void
     {
         $calendar = Calendar::factory()->create();
-        Label::factory()->create(['calendar_id' => $calendar->id]);
-        Entry::factory()->create(['calendar_id' => $calendar->id]);
+        $label = Label::factory()->create(['calendar_id' => $calendar->id]);
+        $entry = Entry::factory()->create(['calendar_id' => $calendar->id]);
 
+        $this->travel(5)->minutes();
         $calendar->delete();
 
-        $this->assertSame(0, Label::query()->count());
-        $this->assertSame(0, Entry::query()->count());
+        $this->assertSoftDeleted($calendar);
+        $this->assertSoftDeleted($label);
+        $this->assertSoftDeleted($entry);
+        $this->assertTrue($entry->fresh()->updated_at->isAfter($entry->updated_at));
     }
 }

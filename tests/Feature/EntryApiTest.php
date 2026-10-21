@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Enums\EntrySymbol;
 use App\Models\Calendar;
 use App\Models\Entry;
-use App\Models\Label;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -32,7 +31,7 @@ class EntryApiTest extends TestCase
             ->assertJsonPath('data.date', '2026-09-14')
             ->assertJsonPath('data.symbol', EntrySymbol::Check->value)
             ->assertJsonPath('data.text', 'At home | Standup')
-            ->assertJsonPath('data.label_id', null);
+            ->assertJsonPath('data.mark_color', null);
     }
 
     public function test_a_user_cannot_write_onto_another_users_calendar(): void
@@ -49,81 +48,125 @@ class EntryApiTest extends TestCase
         $this->assertDatabaseCount('entries', 0);
     }
 
-    public function test_a_day_can_be_marked_with_a_label_from_its_own_calendar(): void
+    public function test_a_day_can_be_marked_with_any_colour_named_or_not(): void
     {
         $user = User::factory()->create();
         $calendar = Calendar::factory()->create(['owner_id' => $user->id]);
-        $label = Label::factory()->create(['calendar_id' => $calendar->id]);
         Sanctum::actingAs($user);
 
         $this->postJson('/api/entries', [
             'calendar_id' => $calendar->id,
             'date' => '2026-09-14',
-            'label_id' => $label->id,
-        ])->assertCreated()->assertJsonPath('data.label_id', $label->id);
+            'mark_color' => '#6F9461',
+        ])->assertCreated()->assertJsonPath('data.mark_color', '#6f9461');
     }
 
-    public function test_a_label_from_another_calendar_is_rejected(): void
+    public function test_a_mark_colour_must_be_a_hex_colour(): void
     {
         $user = User::factory()->create();
         $calendar = Calendar::factory()->create(['owner_id' => $user->id]);
-
-        // A label the caller owns, but on a different calendar.
-        $otherOwnCalendar = Calendar::factory()->create(['owner_id' => $user->id]);
-        $wrongLabel = Label::factory()->create(['calendar_id' => $otherOwnCalendar->id]);
-
-        // And one belonging to someone else entirely.
-        $foreignLabel = Label::factory()->create();
-
         Sanctum::actingAs($user);
 
-        foreach ([$wrongLabel, $foreignLabel] as $label) {
-            $this->postJson('/api/entries', [
-                'calendar_id' => $calendar->id,
-                'date' => '2026-09-14',
-                'label_id' => $label->id,
-            ])->assertStatus(422)->assertJsonValidationErrors('label_id');
-        }
-
-        $this->assertDatabaseCount('entries', 0);
+        $this->postJson('/api/entries', [
+            'calendar_id' => $calendar->id,
+            'date' => '2026-09-14',
+            'mark_color' => 'red',
+        ])->assertStatus(422)->assertJsonValidationErrors('mark_color');
     }
 
     public function test_a_mark_can_be_cleared_to_null(): void
     {
         $user = User::factory()->create();
         $calendar = Calendar::factory()->create(['owner_id' => $user->id]);
-        $label = Label::factory()->create(['calendar_id' => $calendar->id]);
-        $entry = Entry::factory()->create([
-            'calendar_id' => $calendar->id,
-            'label_id' => $label->id,
-        ]);
+        $entry = Entry::factory()->create(['calendar_id' => $calendar->id, 'mark_color' => '#ff0000']);
 
         Sanctum::actingAs($user);
 
-        $this->putJson("/api/entries/{$entry->id}", ['label_id' => null])
+        $this->putJson("/api/entries/{$entry->id}", ['mark_color' => null])
             ->assertOk()
-            ->assertJsonPath('data.label_id', null);
-
-        $this->assertNull($entry->fresh()->label_id);
+            ->assertJsonPath('data.mark_color', null);
     }
 
-    public function test_deleting_a_label_unmarks_the_days_that_used_it(): void
+    public function test_writing_a_day_that_already_has_a_note_updates_it(): void
     {
         $user = User::factory()->create();
         $calendar = Calendar::factory()->create(['owner_id' => $user->id]);
-        $label = Label::factory()->create(['calendar_id' => $calendar->id]);
-        $entry = Entry::factory()->create([
-            'calendar_id' => $calendar->id,
-            'label_id' => $label->id,
-        ]);
+        $entry = Entry::factory()->create(['calendar_id' => $calendar->id, 'date' => '2026-09-14', 'text' => 'First']);
 
         Sanctum::actingAs($user);
 
-        $this->deleteJson("/api/labels/{$label->id}")->assertOk();
+        $this->postJson('/api/entries', [
+            'calendar_id' => $calendar->id,
+            'date' => '2026-09-14',
+            'text' => 'Second',
+        ])->assertOk()->assertJsonPath('data.id', $entry->id)->assertJsonPath('data.text', 'Second');
 
-        $this->getJson("/api/entries/{$entry->id}")
+        $this->assertDatabaseCount('entries', 1);
+    }
+
+    public function test_writing_a_deleted_day_restores_it_blank(): void
+    {
+        $user = User::factory()->create();
+        $calendar = Calendar::factory()->create(['owner_id' => $user->id]);
+        $entry = Entry::factory()->create([
+            'calendar_id' => $calendar->id,
+            'date' => '2026-09-14',
+            'text' => 'Old note',
+            'mark_color' => '#ff0000',
+        ]);
+        $entry->delete();
+
+        Sanctum::actingAs($user);
+
+        $this->postJson('/api/entries', [
+            'calendar_id' => $calendar->id,
+            'date' => '2026-09-14',
+            'symbol' => EntrySymbol::Check->value,
+        ])
             ->assertOk()
-            ->assertJsonPath('data.label_id', null);
+            ->assertJsonPath('data.id', $entry->id)
+            ->assertJsonPath('data.deleted_at', null)
+            ->assertJsonPath('data.text', null)
+            ->assertJsonPath('data.mark_color', null)
+            ->assertJsonPath('data.symbol', EntrySymbol::Check->value);
+    }
+
+    public function test_since_returns_changed_and_deleted_entries_only(): void
+    {
+        $user = User::factory()->create();
+        $calendar = Calendar::factory()->create(['owner_id' => $user->id]);
+        Entry::factory()->create(['calendar_id' => $calendar->id]);
+
+        $this->travel(1)->hour();
+        $since = now()->toISOString();
+        $changed = Entry::factory()->create(['calendar_id' => $calendar->id]);
+        $deleted = Entry::factory()->create(['calendar_id' => $calendar->id]);
+        $deleted->delete();
+
+        Sanctum::actingAs($user);
+
+        $response = $this->getJson('/api/entries?since='.urlencode($since))->assertOk();
+
+        $this->assertEqualsCanonicalizing([$changed->id, $deleted->id], $response->json('data.*.id'));
+        $this->assertNotNull(collect($response->json('data'))->firstWhere('id', $deleted->id)['deleted_at']);
+    }
+
+    public function test_since_reports_entries_of_a_deleted_calendar(): void
+    {
+        $user = User::factory()->create();
+        $calendar = Calendar::factory()->create(['owner_id' => $user->id]);
+        $entry = Entry::factory()->create(['calendar_id' => $calendar->id]);
+
+        $this->travel(1)->hour();
+        $since = now()->toISOString();
+        $calendar->delete();
+
+        Sanctum::actingAs($user);
+
+        $this->getJson('/api/entries?since='.urlencode($since))
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $entry->id)
+            ->assertJsonPath('data.0.deleted_at', fn ($value) => $value !== null);
     }
 
     public function test_index_returns_only_entries_from_the_callers_calendars(): void
@@ -153,6 +196,39 @@ class EntryApiTest extends TestCase
             ->assertJsonPath('data.0.date', '2026-09-14');
     }
 
+    public function test_a_month_filter_includes_its_last_day_and_nothing_after(): void
+    {
+        $user = User::factory()->create();
+        $calendar = Calendar::factory()->create(['owner_id' => $user->id]);
+        Entry::factory()->create(['calendar_id' => $calendar->id, 'date' => '2026-09-01']);
+        Entry::factory()->create(['calendar_id' => $calendar->id, 'date' => '2026-09-30']);
+        Entry::factory()->create(['calendar_id' => $calendar->id, 'date' => '2026-10-01']);
+
+        Sanctum::actingAs($user);
+
+        $this->getJson('/api/entries?month=9&year=2026')
+            ->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('data.1.date', '2026-09-30');
+    }
+
+    public function test_a_month_filter_requires_a_year(): void
+    {
+        Sanctum::actingAs(User::factory()->create());
+
+        $this->getJson('/api/entries?month=9')
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('year');
+    }
+
+    public function test_a_non_owner_is_forbidden_before_their_payload_is_validated(): void
+    {
+        $entry = Entry::factory()->create();
+        Sanctum::actingAs(User::factory()->create());
+
+        $this->putJson("/api/entries/{$entry->id}", ['symbol' => 'explosion'])->assertForbidden();
+    }
+
     public function test_a_user_cannot_read_update_or_delete_another_users_entry(): void
     {
         $entry = Entry::factory()->create(['text' => 'Private']);
@@ -178,24 +254,27 @@ class EntryApiTest extends TestCase
             ->assertJsonPath('data.text', 'Updated note');
 
         $this->deleteJson("/api/entries/{$entry->id}")->assertOk();
-        $this->assertDatabaseMissing('entries', ['id' => $entry->id]);
+        $this->assertSoftDeleted($entry);
+        $this->getJson("/api/entries/{$entry->id}")->assertNotFound();
     }
 
-    public function test_an_entry_cannot_be_moved_to_another_calendar_by_update(): void
+    public function test_an_entry_cannot_be_moved_to_another_calendar_or_day_by_update(): void
     {
         $user = User::factory()->create();
         $calendar = Calendar::factory()->create(['owner_id' => $user->id]);
-        $entry = Entry::factory()->create(['calendar_id' => $calendar->id]);
+        $entry = Entry::factory()->create(['calendar_id' => $calendar->id, 'date' => '2026-09-14']);
         $otherCalendar = Calendar::factory()->create();
 
         Sanctum::actingAs($user);
 
         $this->putJson("/api/entries/{$entry->id}", [
             'calendar_id' => $otherCalendar->id,
+            'date' => '2026-09-15',
             'text' => 'Still mine',
         ])->assertOk();
 
         $this->assertSame($calendar->id, $entry->fresh()->calendar_id);
+        $this->assertSame('2026-09-14', $entry->fresh()->date->toDateString());
     }
 
     public function test_an_invalid_symbol_is_rejected(): void

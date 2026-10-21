@@ -24,7 +24,7 @@ class Setting extends Model
      * @var array<string, mixed>
      */
     protected $attributes = [
-        'note_font_size' => 14,
+        'note_font_size' => 14.0,
         'note_font' => 'sans',
         'day_mark_style' => 'stroke',
     ];
@@ -35,7 +35,7 @@ class Setting extends Model
     protected function casts(): array
     {
         return [
-            'note_font_size' => 'integer',
+            'note_font_size' => 'float',
             'day_mark_style' => DayMarkStyle::class,
         ];
     }

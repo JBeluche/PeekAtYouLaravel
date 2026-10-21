@@ -45,7 +45,7 @@ class AuthTest extends TestCase
         $user = User::where('email', 'jerimie@example.com')->sole();
 
         $this->assertInstanceOf(Setting::class, $user->setting);
-        $this->assertSame(14, $user->setting->note_font_size);
+        $this->assertSame(14.0, $user->setting->note_font_size);
     }
 
     public function test_registration_never_returns_the_password_hash(): void
@@ -115,13 +115,52 @@ class AuthTest extends TestCase
         ])->assertUnauthorized()->assertJsonPath('status', 'error');
     }
 
-    public function test_logout_revokes_every_token_and_clears_signed_in(): void
+    public function test_framework_errors_use_the_response_envelope(): void
+    {
+        $this->getJson('/api/user')
+            ->assertUnauthorized()
+            ->assertExactJson(['status' => 'error', 'message' => 'Unauthenticated.', 'data' => null]);
+
+        $this->postJson('/api/register', [])
+            ->assertStatus(422)
+            ->assertJsonPath('status', 'error')
+            ->assertJsonPath('data', null)
+            ->assertJsonValidationErrors(['name', 'email', 'password']);
+    }
+
+    public function test_login_is_rate_limited(): void
+    {
+        foreach (range(1, 10) as $attempt) {
+            $this->postJson('/api/login', [
+                'email' => 'jerimie@example.com',
+                'password' => 'wrong-password',
+            ])->assertUnauthorized();
+        }
+
+        $this->postJson('/api/login', [
+            'email' => 'jerimie@example.com',
+            'password' => 'wrong-password',
+        ])->assertTooManyRequests();
+    }
+
+    public function test_logout_signs_out_only_the_current_device(): void
     {
         $user = User::factory()->create(['signed_in' => true]);
-        Sanctum::actingAs($user);
-        $user->createToken('test')->plainTextToken;
+        $phone = $user->createToken('phone')->plainTextToken;
+        $user->createToken('tablet');
 
-        $this->postJson('/api/logout')->assertOk();
+        $this->withToken($phone)->postJson('/api/logout')->assertOk();
+
+        $this->assertSame(['tablet'], $user->tokens()->pluck('name')->all());
+        $this->assertTrue($user->fresh()->signed_in);
+    }
+
+    public function test_logging_out_the_last_device_clears_signed_in(): void
+    {
+        $user = User::factory()->create(['signed_in' => true]);
+        $token = $user->createToken('phone')->plainTextToken;
+
+        $this->withToken($token)->postJson('/api/logout')->assertOk();
 
         $this->assertSame(0, $user->tokens()->count());
         $this->assertFalse($user->fresh()->signed_in);

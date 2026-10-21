@@ -3,11 +3,12 @@
 namespace Database\Factories;
 
 use App\Enums\DayMarkStyle;
+use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<\App\Models\Setting>
+ * @extends Factory<Setting>
  */
 class SettingFactory extends Factory
 {

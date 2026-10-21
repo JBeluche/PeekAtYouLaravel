@@ -2,11 +2,12 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Entry;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @mixin \App\Models\Entry
+ * @mixin Entry
  */
 class EntryResource extends JsonResource
 {
@@ -22,8 +23,9 @@ class EntryResource extends JsonResource
             'text' => $this->text,
             'pen_color' => $this->pen_color,
             'symbol' => $this->symbol,
-            'label_id' => $this->label_id,
-            'label' => new LabelResource($this->whenLoaded('label')),
+            'mark_color' => $this->mark_color,
+            'updated_at' => $this->updated_at,
+            'deleted_at' => $this->deleted_at,
         ];
     }
 }

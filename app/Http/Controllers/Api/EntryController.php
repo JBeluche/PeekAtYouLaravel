@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Enums\EntrySymbol;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreEntryRequest;
 use App\Http\Requests\UpdateEntryRequest;
@@ -10,6 +11,7 @@ use App\Models\Entry;
 use App\Traits\HttpResponses;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 
 class EntryController extends Controller
 {
@@ -20,22 +22,31 @@ class EntryController extends Controller
         $validated = $request->validate([
             'calendar_id' => ['sometimes', 'integer'],
             'month' => ['sometimes', 'integer', 'between:1,12'],
-            'year' => ['sometimes', 'integer', 'between:1970,9999'],
+            // A month on its own would match that month in every year.
+            'year' => ['required_with:month', 'integer', 'between:1970,9999'],
+            'since' => ['sometimes', 'date'],
         ]);
 
+        $since = $request->date('since');
+
+        // A sync must also see entries of deleted calendars, which were deleted with them.
+        $calendarIds = $request->user()->calendars()
+            ->when($since, fn ($query) => $query->withTrashed())
+            ->select('id');
+
         $entries = Entry::query()
-            ->whereIn('calendar_id', $request->user()->calendars()->select('id'))
+            ->whereIn('calendar_id', $calendarIds)
+            ->when($since, fn ($query) => $query->changedSince($since))
             ->when(
                 isset($validated['calendar_id']),
                 fn ($query) => $query->where('calendar_id', $validated['calendar_id'])
             )
             ->when(
                 isset($validated['year']),
-                fn ($query) => $query->whereYear('date', $validated['year'])
-            )
-            ->when(
-                isset($validated['month']),
-                fn ($query) => $query->whereMonth('date', $validated['month'])
+                fn ($query) => $query->datedIn(
+                    (int) $validated['year'],
+                    isset($validated['month']) ? (int) $validated['month'] : null,
+                )
             )
             ->orderBy('date')
             ->get();
@@ -43,11 +54,36 @@ class EntryController extends Controller
         return $this->success(null, EntryResource::collection($entries));
     }
 
+    /**
+     * Writes the note for a day: creates it, or updates the one already there,
+     * so a retried request or two devices writing the same day never duplicate
+     * it. A deleted day comes back blank before the new values are applied.
+     */
     public function store(StoreEntryRequest $request): JsonResponse
     {
-        $entry = Entry::create($request->validated());
+        $values = $request->validated();
 
-        return $this->success('Entry created', new EntryResource($entry), 201);
+        $entry = Entry::withTrashed()->createOrFirst(Arr::only($values, ['calendar_id', 'date']), $values);
+
+        if (! $entry->wasRecentlyCreated) {
+            if ($entry->trashed()) {
+                $entry->forceFill([
+                    'deleted_at' => null,
+                    'text' => null,
+                    'pen_color' => null,
+                    'symbol' => EntrySymbol::None,
+                    'mark_color' => null,
+                ]);
+            }
+
+            $entry->update($values);
+        }
+
+        return $this->success(
+            $entry->wasRecentlyCreated ? 'Entry created' : 'Entry saved',
+            new EntryResource($entry),
+            $entry->wasRecentlyCreated ? 201 : 200,
+        );
     }
 
     public function show(Entry $entry): JsonResponse
@@ -59,9 +95,7 @@ class EntryController extends Controller
 
     public function update(UpdateEntryRequest $request, Entry $entry): JsonResponse
     {
-        $this->authorize('update', $entry);
-
-        // calendar_id is deliberately not updatable; an entry stays on its calendar.
+        // calendar_id and date are deliberately not updatable; an entry is its calendar's note for one day.
         $entry->update($request->validated());
 
         return $this->success('Entry updated', new EntryResource($entry->fresh()));

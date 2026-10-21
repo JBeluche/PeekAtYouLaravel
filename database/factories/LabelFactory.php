@@ -3,10 +3,11 @@
 namespace Database\Factories;
 
 use App\Models\Calendar;
+use App\Models\Label;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<\App\Models\Label>
+ * @extends Factory<Label>
  */
 class LabelFactory extends Factory
 {

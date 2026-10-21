@@ -77,6 +77,19 @@ class SettingApiTest extends TestCase
         $this->putJson('/api/settings', ['note_font_size' => 40])->assertOk();
 
         // The attacker changed only their own row.
-        $this->assertSame(12, $victim->fresh()->setting->note_font_size);
+        $this->assertSame(12.0, $victim->fresh()->setting->note_font_size);
+    }
+
+    public function test_font_size_accepts_quarter_steps_only(): void
+    {
+        Sanctum::actingAs(User::factory()->create());
+
+        $this->putJson('/api/settings', ['note_font_size' => 12.25])
+            ->assertOk()
+            ->assertJsonPath('data.note_font_size', 12.25);
+
+        $this->putJson('/api/settings', ['note_font_size' => 12.3])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('note_font_size');
     }
 }

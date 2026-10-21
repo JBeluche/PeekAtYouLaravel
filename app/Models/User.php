@@ -14,7 +14,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['name', 'email', 'password', 'plan', 'signed_in', 'backup_on', 'last_backup_at'])]
+// plan and signed_in are server-controlled, so they are deliberately not mass assignable.
+#[Fillable(['name', 'email', 'password', 'backup_on', 'last_backup_at'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {

@@ -13,7 +13,7 @@ return new class extends Migration
         Schema::create('settings', function (Blueprint $table) {
             $table->id();
             $table->foreignIdFor(User::class)->unique()->constrained()->cascadeOnDelete();
-            $table->unsignedSmallInteger('note_font_size')->default(14);
+            $table->decimal('note_font_size', 4, 2)->default(14);
             $table->string('note_font')->default('sans');
             $table->string('day_mark_style')->default(DayMarkStyle::Stroke->value);
             $table->timestamps();

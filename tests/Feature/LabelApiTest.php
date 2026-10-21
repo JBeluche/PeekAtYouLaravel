@@ -111,6 +111,75 @@ class LabelApiTest extends TestCase
             ->assertJsonPath('data.name', 'Renamed');
 
         $this->deleteJson("/api/labels/{$label->id}")->assertOk();
-        $this->assertDatabaseMissing('labels', ['id' => $label->id]);
+        $this->assertSoftDeleted($label);
+    }
+
+    public function test_a_deleted_labels_colour_can_be_used_again(): void
+    {
+        $user = User::factory()->create();
+        $calendar = Calendar::factory()->create(['owner_id' => $user->id]);
+        Label::factory()->create(['calendar_id' => $calendar->id, 'color' => '#ff0000'])->delete();
+
+        Sanctum::actingAs($user);
+
+        $this->postJson('/api/labels', [
+            'calendar_id' => $calendar->id,
+            'color' => '#ff0000',
+            'name' => 'At home',
+        ])->assertCreated();
+    }
+
+    public function test_colours_are_stored_lowercase_so_case_variants_clash(): void
+    {
+        $user = User::factory()->create();
+        $calendar = Calendar::factory()->create(['owner_id' => $user->id]);
+        Label::factory()->create(['calendar_id' => $calendar->id, 'color' => '#ff0000']);
+
+        Sanctum::actingAs($user);
+
+        $this->postJson('/api/labels', [
+            'calendar_id' => $calendar->id,
+            'color' => '#FF0000',
+            'name' => 'Shouting',
+        ])->assertStatus(422)->assertJsonValidationErrors('color');
+    }
+
+    public function test_a_retried_create_returns_the_same_label(): void
+    {
+        $user = User::factory()->create();
+        $calendar = Calendar::factory()->create(['owner_id' => $user->id]);
+        Sanctum::actingAs($user);
+
+        $payload = [
+            'calendar_id' => $calendar->id,
+            'client_uuid' => '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d',
+            'color' => '#ff0000',
+            'name' => 'At home',
+        ];
+
+        $id = $this->postJson('/api/labels', $payload)->assertCreated()->json('data.id');
+        $this->postJson('/api/labels', $payload)->assertOk()->assertJsonPath('data.id', $id);
+
+        $this->assertDatabaseCount('labels', 1);
+    }
+
+    public function test_since_returns_changed_and_deleted_labels(): void
+    {
+        $user = User::factory()->create();
+        $calendar = Calendar::factory()->create(['owner_id' => $user->id]);
+        Label::factory()->create(['calendar_id' => $calendar->id]);
+        $deleted = Label::factory()->create(['calendar_id' => $calendar->id]);
+
+        $this->travel(1)->hour();
+        $since = now()->toISOString();
+        $deleted->delete();
+
+        Sanctum::actingAs($user);
+
+        $this->getJson('/api/labels?since='.urlencode($since))
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $deleted->id)
+            ->assertJsonPath('data.0.deleted_at', fn ($value) => $value !== null);
     }
 }

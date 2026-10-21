@@ -18,26 +18,39 @@ class CalendarController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $calendars = $request->user()->calendars()->with('labels')->get();
+        $request->validate(['since' => ['sometimes', 'date']]);
+
+        $calendars = $request->user()->calendars()
+            ->when($request->date('since'), fn ($query, $since) => $query->changedSince($since))
+            ->with('labels')
+            ->get();
 
         return $this->success(null, CalendarResource::collection($calendars));
     }
 
+    /**
+     * A retry with the same client_uuid returns the calendar already made.
+     */
     public function store(StoreCalendarRequest $request): JsonResponse
     {
         $calendar = DB::transaction(function () use ($request) {
-            $calendar = $request->user()->calendars()->create(
-                $request->safe()->only('name')
+            $calendar = $request->user()->calendars()->withTrashed()->createOrFirst(
+                ['client_uuid' => $request->validated('client_uuid')],
+                ['name' => $request->validated('name')],
             );
 
-            if ($labels = $request->validated('labels')) {
+            if ($calendar->wasRecentlyCreated && $labels = $request->validated('labels')) {
                 $calendar->labels()->createMany($labels);
             }
 
             return $calendar;
         });
 
-        return $this->success('Calendar created', new CalendarResource($calendar->load('labels')), 201);
+        return $this->success(
+            $calendar->wasRecentlyCreated ? 'Calendar created' : 'Calendar already exists',
+            new CalendarResource($calendar->load('labels')),
+            $calendar->wasRecentlyCreated ? 201 : 200,
+        );
     }
 
     public function show(Calendar $calendar): JsonResponse
@@ -49,8 +62,6 @@ class CalendarController extends Controller
 
     public function update(UpdateCalendarRequest $request, Calendar $calendar): JsonResponse
     {
-        $this->authorize('update', $calendar);
-
         $calendar->update($request->safe()->only('name'));
 
         return $this->success('Calendar updated', new CalendarResource($calendar->load('labels')));
@@ -60,7 +71,8 @@ class CalendarController extends Controller
     {
         $this->authorize('delete', $calendar);
 
-        $calendar->delete();
+        // Soft-deletes the calendar and, through the model, its labels and entries.
+        DB::transaction(fn () => $calendar->delete());
 
         return $this->success('Calendar deleted');
     }
@@ -76,16 +88,13 @@ class CalendarController extends Controller
             'year' => ['sometimes', 'integer', 'between:1970,9999'],
         ]);
 
-        $month = $validated['month'] ?? (int) date('m');
-        $year = $validated['year'] ?? (int) date('Y');
+        $year = (int) ($validated['year'] ?? now()->year);
+        $month = (int) ($validated['month'] ?? now()->month);
 
         $calendars = $request->user()->calendars()
             ->with([
                 'labels',
-                'entries' => fn ($query) => $query
-                    ->whereYear('date', $year)
-                    ->whereMonth('date', $month)
-                    ->orderBy('date'),
+                'entries' => fn ($query) => $query->datedIn($year, $month)->orderBy('date'),
             ])
             ->get();
 

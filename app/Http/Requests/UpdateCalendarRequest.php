@@ -6,9 +6,13 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateCalendarRequest extends FormRequest
 {
+    /**
+     * Checked here rather than in the controller so a non-owner gets a 403
+     * before validation can tell them anything about the payload.
+     */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->can('update', $this->route('calendar'));
     }
 
     /**

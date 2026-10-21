@@ -33,7 +33,6 @@ class SettingController extends Controller
      */
     private function settingFor(Request $request): Setting
     {
-        return $request->user()->setting
-            ?? Setting::create(['user_id' => $request->user()->id]);
+        return $request->user()->setting()->firstOrCreate();
     }
 }

@@ -2,11 +2,12 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @mixin \App\Models\Setting
+ * @mixin Setting
  */
 class SettingResource extends JsonResource
 {
@@ -19,6 +20,7 @@ class SettingResource extends JsonResource
             'note_font_size' => $this->note_font_size,
             'note_font' => $this->note_font,
             'day_mark_style' => $this->day_mark_style,
+            'updated_at' => $this->updated_at,
         ];
     }
 }

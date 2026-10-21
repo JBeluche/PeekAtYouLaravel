@@ -54,6 +54,21 @@ class CalendarApiTest extends TestCase
         $this->assertDatabaseHas('calendars', ['name' => 'Work', 'owner_id' => $user->id]);
     }
 
+    public function test_a_legend_with_a_repeated_colour_is_rejected(): void
+    {
+        Sanctum::actingAs(User::factory()->create());
+
+        $this->postJson('/api/calendars', [
+            'name' => 'Work',
+            'labels' => [
+                ['color' => '#ff0000', 'name' => 'At home'],
+                ['color' => '#ff0000', 'name' => 'Standup'],
+            ],
+        ])->assertStatus(422)->assertJsonValidationErrors('labels.1.color');
+
+        $this->assertDatabaseCount('calendars', 0);
+    }
+
     public function test_a_calendar_is_always_owned_by_the_caller(): void
     {
         $user = User::factory()->create();
@@ -107,7 +122,56 @@ class CalendarApiTest extends TestCase
             ->assertJsonPath('data.name', 'Renamed');
 
         $this->deleteJson("/api/calendars/{$calendar->id}")->assertOk();
-        $this->assertDatabaseMissing('calendars', ['id' => $calendar->id]);
+        $this->assertSoftDeleted($calendar);
+        $this->getJson('/api/calendars')->assertOk()->assertJsonCount(0, 'data');
+    }
+
+    public function test_a_retried_create_returns_the_same_calendar(): void
+    {
+        Sanctum::actingAs(User::factory()->create());
+
+        $payload = [
+            'client_uuid' => '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d',
+            'name' => 'Work',
+            'labels' => [['color' => '#ff0000', 'name' => 'At home']],
+        ];
+
+        $id = $this->postJson('/api/calendars', $payload)->assertCreated()->json('data.id');
+        $this->postJson('/api/calendars', $payload)->assertOk()->assertJsonPath('data.id', $id);
+
+        $this->assertDatabaseCount('calendars', 1);
+        $this->assertDatabaseCount('labels', 1);
+    }
+
+    public function test_the_same_client_uuid_on_two_accounts_makes_two_calendars(): void
+    {
+        $uuid = '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d';
+        Calendar::factory()->create(['client_uuid' => $uuid]);
+
+        Sanctum::actingAs(User::factory()->create());
+
+        $this->postJson('/api/calendars', ['client_uuid' => $uuid, 'name' => 'Mine'])
+            ->assertCreated()
+            ->assertJsonPath('data.name', 'Mine');
+    }
+
+    public function test_since_returns_changed_and_deleted_calendars(): void
+    {
+        $user = User::factory()->create();
+        Calendar::factory()->create(['owner_id' => $user->id]);
+        $deleted = Calendar::factory()->create(['owner_id' => $user->id]);
+
+        $this->travel(1)->hour();
+        $since = now()->toISOString();
+        $deleted->delete();
+
+        Sanctum::actingAs($user);
+
+        $this->getJson('/api/calendars?since='.urlencode($since))
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $deleted->id)
+            ->assertJsonPath('data.0.deleted_at', fn ($value) => $value !== null);
     }
 
     public function test_the_entries_aggregate_filters_by_month_and_year(): void
